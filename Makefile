@@ -61,5 +61,4 @@ run-server:
 # make migrate-down-all (membatalkan semua migrasi)
 # make migrate-status (melihat status migrasi)
 # make migrate-refresh (membuat ulang migrasi terakhir)
-
 # make run-server (menjalankan aplikasi)
