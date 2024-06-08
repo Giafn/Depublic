@@ -9,14 +9,16 @@ import (
 )
 
 type AppHandler struct {
-	WelcomeHandler echo.HandlerFunc
-	UserHandler    UserHandler
+	WelcomeHandler     echo.HandlerFunc
+	UserHandler        UserHandler
+	TransactionHandler TransactionHandler
 }
 
-func NewAppHandler(userHandler UserHandler) AppHandler {
+func NewAppHandler(userHandler UserHandler, transactionHandler TransactionHandler) AppHandler {
 	return AppHandler{
-		WelcomeHandler: welcome,
-		UserHandler:    userHandler,
+		WelcomeHandler:     welcome,
+		UserHandler:        userHandler,
+		TransactionHandler: transactionHandler,
 	}
 }
 

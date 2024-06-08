@@ -10,6 +10,7 @@ import (
 func AppPublicRoutes(Handler handler.AppHandler) []*route.Route {
 	welcome := Handler.WelcomeHandler
 	userHandler := Handler.UserHandler
+
 	return []*route.Route{
 		{
 			Method:  http.MethodGet,
@@ -31,6 +32,7 @@ func AppPublicRoutes(Handler handler.AppHandler) []*route.Route {
 
 func AppPrivateRoutes(Handler handler.AppHandler) []*route.Route {
 	userHandler := Handler.UserHandler
+	transactionHandler := Handler.TransactionHandler
 
 	return []*route.Route{
 		{
@@ -42,6 +44,26 @@ func AppPrivateRoutes(Handler handler.AppHandler) []*route.Route {
 			Method:  http.MethodGet,
 			Path:    "/users/:id",
 			Handler: userHandler.FindUserByID,
+		},
+		{
+			Method:  http.MethodPost,
+			Path:    "/transactions",
+			Handler: transactionHandler.CreateTransaction,
+		},
+		{
+			Method:  http.MethodGet,
+			Path:    "/transactions/:id",
+			Handler: transactionHandler.FindTransactionByID,
+		},
+		{
+			Method:  http.MethodGet,
+			Path:    "/transactions",
+			Handler: transactionHandler.FindAllTransactions,
+		},
+		{
+			Method:  http.MethodPut,
+			Path:    "/transactions/:id",
+			Handler: transactionHandler.UpdateTransaction,
 		},
 	}
 }

@@ -13,12 +13,16 @@ import (
 	"gorm.io/gorm"
 )
 
-func BuildAppPublicRoutes(db *gorm.DB, tokenUseCase token.TokenUseCase, encryptTool encrypt.EncryptTool) []*route.Route {
+func BuildAppPublicRoutes(db *gorm.DB, tokenUse token.TokenUseCase, encryptTool encrypt.EncryptTool) []*route.Route {
 	userRepository := repository.NewUserRepository(db, nil)
-	userService := service.NewUserService(userRepository, tokenUseCase, encryptTool)
+	userService := service.NewUserService(userRepository, tokenUse, encryptTool)
 	userHandler := handler.NewUserHandler(userService)
 
-	appHandler := handler.NewAppHandler(userHandler)
+	transactionRepository := repository.NewTransactionRepository(db, nil)
+	transactionService := service.NewTransactionService(transactionRepository)
+	transactionHandler := handler.NewTransactionHandler(transactionService)
+
+	appHandler := handler.NewAppHandler(userHandler, transactionHandler)
 	return router.AppPublicRoutes(appHandler)
 }
 
@@ -28,6 +32,10 @@ func BuildAppPrivateRoutes(db *gorm.DB, redisDB *redis.Client, encryptTool encry
 	userService := service.NewUserService(userRepository, nil, encryptTool)
 	userHandler := handler.NewUserHandler(userService)
 
-	appHandler := handler.NewAppHandler(userHandler)
+	transactionRepository := repository.NewTransactionRepository(db, cacheable)
+	transactionService := service.NewTransactionService(transactionRepository)
+	transactionHandler := handler.NewTransactionHandler(transactionService)
+
+	appHandler := handler.NewAppHandler(userHandler, transactionHandler)
 	return router.AppPrivateRoutes(appHandler)
 }

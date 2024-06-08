@@ -39,7 +39,7 @@ Sebelum mulai menjalankan develop project nya, harus menginstal beberapa tools d
 - Jalankan migrasi dengan make tool :
 
     ```sh
-    make migration-up
+    make migrate-up
     ```
 - Jalankan server echo untuk memulai develop
     - bisa dengan make command
