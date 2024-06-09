@@ -2,7 +2,6 @@ package service
 
 import (
 	"errors"
-	"time"
 
 	"github.com/Giafn/Depublic/internal/entity"
 	"github.com/Giafn/Depublic/internal/repository"
@@ -14,7 +13,7 @@ import (
 )
 
 type UserService interface {
-	Login(email string, password string) (string, error)
+	Login(email string, password string) (jwtResponse, error)
 	CreateUser(user *entity.User) (*entity.User, error)
 	FindAllUser() ([]entity.User, error)
 	FindUserByID(id uuid.UUID) (*entity.User, error)
@@ -26,6 +25,11 @@ type userService struct {
 	encryptTool    encrypt.EncryptTool
 }
 
+type jwtResponse struct {
+	Token      string `json:"token"`
+	Expired_at string `json:"expired_at"`
+}
+
 func NewUserService(userRepository repository.UserRepository, tokenUseCase token.TokenUseCase, encryptTool encrypt.EncryptTool) UserService {
 	return &userService{
 		userRepository: userRepository,
@@ -34,18 +38,21 @@ func NewUserService(userRepository repository.UserRepository, tokenUseCase token
 	}
 }
 
-func (s *userService) Login(email string, password string) (string, error) {
+func (s *userService) Login(email string, password string) (data jwtResponse, error error) {
 	user, err := s.userRepository.FindUserByEmail(email)
+
+	data = jwtResponse{}
+	data.Token = ""
+	data.Expired_at = ""
+
 	if err != nil {
-		return "", errors.New("email/password yang anda masukkan salah")
+		return data, errors.New("email/password yang anda masukkan salah")
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 	if err != nil {
-		return "", errors.New("email/password yang anda masukkan salah")
+		return data, errors.New("email/password yang anda masukkan salah")
 	}
-
-	expiredTime := time.Now().Local().Add(60 * time.Minute)
 
 	user.Alamat, _ = s.encryptTool.Decrypt(user.Alamat)
 	user.NoHp, _ = s.encryptTool.Decrypt(user.NoHp)
@@ -57,17 +64,19 @@ func (s *userService) Login(email string, password string) (string, error) {
 		Alamat: user.Alamat,
 		NoHP:   user.NoHp,
 		RegisteredClaims: jwt.RegisteredClaims{
-			Issuer:    "Go-Commerce",
-			ExpiresAt: jwt.NewNumericDate(expiredTime),
+			Issuer: "Go-Commerce",
 		},
 	}
 
-	token, err := s.tokenUseCase.GenerateAccessToken(claims)
+	token, expiredAt, err := s.tokenUseCase.GenerateAccessToken(claims)
 	if err != nil {
-		return "", errors.New("ada kesalahan dari sistem")
+		return data, err
 	}
 
-	return token, nil
+	data.Token = token
+	data.Expired_at = expiredAt.Format("2006-01-02 15:04:05")
+
+	return data, nil
 }
 
 func (s *userService) CreateUser(user *entity.User) (*entity.User, error) {
