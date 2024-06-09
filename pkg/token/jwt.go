@@ -1,15 +1,18 @@
 package token
 
 import (
+	"time"
+
 	"github.com/golang-jwt/jwt/v5"
 )
 
 type TokenUseCase interface {
-	GenerateAccessToken(claims JwtCustomClaims) (string, error)
+	GenerateAccessToken(claims JwtCustomClaims) (string, time.Time, error)
 }
 
 type tokenUseCase struct {
-	secretKey string
+	secretKey          string
+	expirationDuration time.Duration
 }
 
 type JwtCustomClaims struct {
@@ -21,20 +24,25 @@ type JwtCustomClaims struct {
 	jwt.RegisteredClaims
 }
 
-func NewTokenUseCase(secretKey string) *tokenUseCase {
+func NewTokenUseCase(secretKey string, expirationDuration time.Duration) *tokenUseCase {
 	return &tokenUseCase{
-		secretKey: secretKey,
+		secretKey:          secretKey,
+		expirationDuration: expirationDuration,
 	}
 }
 
-func (t *tokenUseCase) GenerateAccessToken(claims JwtCustomClaims) (string, error) {
+func (t *tokenUseCase) GenerateAccessToken(claims JwtCustomClaims) (string string, expiredAt time.Time, err error) {
+	// Set default expiration time if not provided
+	if claims.ExpiresAt == nil {
+		expirationTime := time.Now().Add(t.expirationDuration)
+		claims.ExpiresAt = jwt.NewNumericDate(expirationTime)
+	}
 	plainToken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
 	encodedToken, err := plainToken.SignedString([]byte(t.secretKey))
 
 	if err != nil {
-		return "", err
+		return "", time.Time{}, err
 	}
-
-	return encodedToken, nil
+	return encodedToken, claims.ExpiresAt.Time, nil
 }

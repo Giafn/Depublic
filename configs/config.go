@@ -26,6 +26,7 @@ type PostgresConfig struct {
 
 type JWTConfig struct {
 	SecretKey string `env:"SECRET_KEY" envDefault:"secret"`
+	ExpiresAt int    `env:"EXPIRES_AT" envDefault:"24"`
 }
 
 type RedisConfig struct {

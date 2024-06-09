@@ -1,6 +1,8 @@
 package main
 
 import (
+	"time"
+
 	"github.com/Giafn/Depublic/configs"
 	"github.com/Giafn/Depublic/internal/builder"
 	"github.com/Giafn/Depublic/pkg/cache"
@@ -20,7 +22,7 @@ func main() {
 	redisDB, err := cache.InitRedis(&cfg.Redis)
 	checkError(err)
 
-	tokenUse := token.NewTokenUseCase(cfg.JWT.SecretKey)
+	tokenUse := token.NewTokenUseCase(cfg.JWT.SecretKey, time.Duration(cfg.JWT.ExpiresAt)*time.Hour)
 	encryptTool := encrypt.NewEncryptTool(cfg.Encrypt.SecretKey, cfg.Encrypt.Iv)
 
 	publicRoutes := builder.BuildAppPublicRoutes(db, tokenUse, encryptTool)
