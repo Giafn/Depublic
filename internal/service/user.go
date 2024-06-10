@@ -64,7 +64,7 @@ func (s *userService) Login(email string, password string) (data jwtResponse, er
 		Alamat: user.Alamat,
 		NoHP:   user.NoHp,
 		RegisteredClaims: jwt.RegisteredClaims{
-			Issuer: "Go-Commerce",
+			Issuer: "Depublic-App",
 		},
 	}
 
