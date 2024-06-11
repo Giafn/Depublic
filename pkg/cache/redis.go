@@ -28,6 +28,7 @@ func InitRedis(config *configs.RedisConfig) (*redis.Client, error) {
 type Cacheable interface {
 	Set(key string, value interface{}, expiration time.Duration) error
 	Get(key string) string
+	Del(key string) error
 }
 
 type cacheable struct {
@@ -54,4 +55,12 @@ func (c *cacheable) Get(key string) string {
 		return ""
 	}
 	return val
+}
+
+func (c *cacheable) Del(key string) error {
+	operation := c.client.Del(context.Background(), key)
+	if err := operation.Err(); err != nil {
+		return err
+	}
+	return nil
 }

@@ -3,7 +3,7 @@ package entity
 import "github.com/google/uuid"
 
 type User struct {
-	ID       uuid.UUID `json:"id"`
+	UserId   uuid.UUID `json:"user_id"`
 	Email    string    `json:"email"`
 	Password string    `json:"-"`
 	Role     string    `json:"role"`
@@ -12,7 +12,7 @@ type User struct {
 
 func NewUser(email, password, role string) *User {
 	return &User{
-		ID:        uuid.New(),
+		UserId:    uuid.New(),
 		Email:     email,
 		Password:  password,
 		Role:      role,
@@ -20,9 +20,9 @@ func NewUser(email, password, role string) *User {
 	}
 }
 
-func UpdateUser(id uuid.UUID, email, password, role, alamat, noHp string) *User {
+func UpdateUser(user_id uuid.UUID, email, password, role, alamat, noHp string) *User {
 	return &User{
-		ID:        id,
+		UserId:    user_id,
 		Email:     email,
 		Password:  password,
 		Role:      role,

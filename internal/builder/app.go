@@ -13,8 +13,9 @@ import (
 	"gorm.io/gorm"
 )
 
-func BuildAppPublicRoutes(db *gorm.DB, tokenUseCase token.TokenUseCase) []*route.Route {
-	userRepository := repository.NewUserRepository(db, nil)
+func BuildAppPublicRoutes(db *gorm.DB, redisDB *redis.Client, tokenUseCase token.TokenUseCase) []*route.Route {
+	cacheable := cache.NewCacheable(redisDB)
+	userRepository := repository.NewUserRepository(db, cacheable)
 	userService := service.NewUserService(userRepository, tokenUseCase)
 	userHandler := handler.NewUserHandler(userService)
 

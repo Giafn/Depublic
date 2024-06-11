@@ -52,7 +52,7 @@ func (s *userService) Login(email string, password string) (data jwtResponse, er
 	}
 
 	claims := token.JwtCustomClaims{
-		ID:    user.ID.String(),
+		ID:    user.UserId.String(),
 		Email: user.Email,
 		Role:  user.Role,
 		RegisteredClaims: jwt.RegisteredClaims{
@@ -100,7 +100,7 @@ func (s *userService) FindAllUser() ([]entity.User, error) {
 	formattedUser := make([]entity.User, 0)
 	for _, v := range users {
 		formattedUser = append(formattedUser, entity.User{
-			ID:        v.ID,
+			UserId:    v.UserId,
 			Email:     v.Email,
 			Role:      v.Role,
 			Auditable: v.Auditable,

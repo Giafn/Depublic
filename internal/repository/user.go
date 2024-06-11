@@ -75,6 +75,9 @@ func (r *userRepository) CreateUser(user *entity.User) (*entity.User, error) {
 	if err := r.db.Create(&user).Error; err != nil {
 		return user, err
 	}
-	r.cacheable.Set("FindAllUsers", "", 0)
+	err := r.cacheable.Del("FindAllUsers")
+	if err != nil {
+		return user, err
+	}
 	return user, nil
 }
