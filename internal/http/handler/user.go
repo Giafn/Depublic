@@ -49,7 +49,11 @@ func (h *UserHandler) Register(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, response.SuccessResponse(http.StatusBadRequest, errorMessage, data))
 	}
 
-	newUser := entity.NewUser(input.Email, input.Password, input.Role, input.Alamat, input.NoHp)
+	if input.Role != "user" && input.Role != "admin" {
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, "role yang anda masukkan salah"))
+	}
+
+	newUser := entity.NewUser(input.Email, input.Password, input.Role)
 
 	user, err := h.userService.CreateUser(newUser)
 	if err != nil {

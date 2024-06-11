@@ -25,7 +25,7 @@ func NewServer(serverName string, publicRoutes, privateRoutes []*route.Route, se
 	e := echo.New()
 
 	e.GET("/", func(c echo.Context) error {
-		return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "Hello, World!", nil))
+		return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "Welcome To Depublic App please Access /app/api/v1/register for register!", nil))
 	})
 
 	v1 := e.Group(fmt.Sprintf("%s/api/v1", serverName))
