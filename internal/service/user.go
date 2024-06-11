@@ -5,7 +5,6 @@ import (
 
 	"github.com/Giafn/Depublic/internal/entity"
 	"github.com/Giafn/Depublic/internal/repository"
-	"github.com/Giafn/Depublic/pkg/encrypt"
 	"github.com/Giafn/Depublic/pkg/token"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
@@ -22,7 +21,6 @@ type UserService interface {
 type userService struct {
 	userRepository repository.UserRepository
 	tokenUseCase   token.TokenUseCase
-	encryptTool    encrypt.EncryptTool
 }
 
 type jwtResponse struct {
@@ -30,11 +28,10 @@ type jwtResponse struct {
 	Expired_at string `json:"expired_at"`
 }
 
-func NewUserService(userRepository repository.UserRepository, tokenUseCase token.TokenUseCase, encryptTool encrypt.EncryptTool) UserService {
+func NewUserService(userRepository repository.UserRepository, tokenUseCase token.TokenUseCase) UserService {
 	return &userService{
 		userRepository: userRepository,
 		tokenUseCase:   tokenUseCase,
-		encryptTool:    encryptTool,
 	}
 }
 
