@@ -25,7 +25,7 @@ func NewServer(serverName string, publicRoutes, privateRoutes []*route.Route, se
 	e := echo.New()
 
 	e.GET("/", func(c echo.Context) error {
-		return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "Hello, World!", nil))
+		return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "Welcome To Depublic App please Access /app/api/v1/register for register!", nil))
 	})
 
 	v1 := e.Group(fmt.Sprintf("%s/api/v1", serverName))
@@ -38,7 +38,7 @@ func NewServer(serverName string, publicRoutes, privateRoutes []*route.Route, se
 
 	if len(privateRoutes) > 0 {
 		for _, v := range privateRoutes {
-			v1.Add(v.Method, v.Path, v.Handler, JWTProtection(secretKey))
+			v1.Add(v.Method, v.Path, v.Handler, JWTProtection(secretKey), RBACMiddleware(v.Roles...))
 		}
 	}
 
@@ -84,4 +84,33 @@ func JWTProtection(secretKey string) echo.MiddlewareFunc {
 			return c.JSON(http.StatusUnauthorized, response.ErrorResponse(http.StatusUnauthorized, "anda harus login untuk mengakses resource ini"))
 		},
 	})
+}
+
+func RBACMiddleware(roles ...string) echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			user, ok := c.Get("user").(*jwt.Token)
+			if !ok {
+				return c.JSON(http.StatusUnauthorized, response.ErrorResponse(http.StatusUnauthorized, "anda harus login untuk mengakses resource ini"))
+			}
+
+			claims := user.Claims.(*token.JwtCustomClaims)
+
+			// Check if the user has the required role
+			if !contains(roles, claims.Role) {
+				return c.JSON(http.StatusForbidden, response.ErrorResponse(http.StatusForbidden, "anda tidak memiliki akses untuk resource ini"))
+			}
+
+			return next(c)
+		}
+	}
+}
+
+func contains(slice []string, s string) bool {
+	for _, value := range slice {
+		if value == s {
+			return true
+		}
+	}
+	return false
 }

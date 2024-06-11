@@ -13,9 +13,10 @@ import (
 	"gorm.io/gorm"
 )
 
-func BuildAppPublicRoutes(db *gorm.DB, tokenUseCase token.TokenUseCase, encryptTool encrypt.EncryptTool) []*route.Route {
-	userRepository := repository.NewUserRepository(db, nil)
-	userService := service.NewUserService(userRepository, tokenUseCase, encryptTool)
+func BuildAppPublicRoutes(db *gorm.DB, redisDB *redis.Client, tokenUseCase token.TokenUseCase) []*route.Route {
+	cacheable := cache.NewCacheable(redisDB)
+	userRepository := repository.NewUserRepository(db, cacheable)
+	userService := service.NewUserService(userRepository, tokenUseCase)
 	userHandler := handler.NewUserHandler(userService)
 
 	appHandler := handler.NewAppHandler(userHandler)
@@ -25,7 +26,7 @@ func BuildAppPublicRoutes(db *gorm.DB, tokenUseCase token.TokenUseCase, encryptT
 func BuildAppPrivateRoutes(db *gorm.DB, redisDB *redis.Client, encryptTool encrypt.EncryptTool) []*route.Route {
 	cacheable := cache.NewCacheable(redisDB)
 	userRepository := repository.NewUserRepository(db, cacheable)
-	userService := service.NewUserService(userRepository, nil, encryptTool)
+	userService := service.NewUserService(userRepository, nil)
 	userHandler := handler.NewUserHandler(userService)
 
 	appHandler := handler.NewAppHandler(userHandler)

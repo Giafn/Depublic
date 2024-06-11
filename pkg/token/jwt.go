@@ -16,11 +16,9 @@ type tokenUseCase struct {
 }
 
 type JwtCustomClaims struct {
-	ID     string `json:"id"`
-	Email  string `json:"email"`
-	Role   string `json:"role"`
-	Alamat string `json:"alamat"`
-	NoHP   string `json:"no_hp"`
+	ID    string `json:"id"`
+	Email string `json:"email"`
+	Role  string `json:"role"`
 	jwt.RegisteredClaims
 }
 

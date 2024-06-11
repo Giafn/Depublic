@@ -7,6 +7,17 @@ import (
 	"github.com/Giafn/Depublic/pkg/route"
 )
 
+const (
+	Admin = "Admin"
+	User  = "User"
+)
+
+var (
+	allRoles  = []string{Admin, User}
+	onlyAdmin = []string{Admin}
+	onlyUser  = []string{User}
+)
+
 func AppPublicRoutes(Handler handler.AppHandler) []*route.Route {
 	welcome := Handler.WelcomeHandler
 	userHandler := Handler.UserHandler
@@ -34,14 +45,22 @@ func AppPrivateRoutes(Handler handler.AppHandler) []*route.Route {
 
 	return []*route.Route{
 		{
+			Method:  http.MethodPost,
+			Path:    "/users",
+			Handler: userHandler.CreateUser,
+			Roles:   onlyAdmin,
+		},
+		{
 			Method:  http.MethodGet,
 			Path:    "/users",
 			Handler: userHandler.FindAllUser,
+			Roles:   onlyAdmin,
 		},
 		{
 			Method:  http.MethodGet,
 			Path:    "/users/:id",
 			Handler: userHandler.FindUserByID,
+			Roles:   onlyAdmin,
 		},
 	}
 }

@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/Giafn/Depublic/internal/entity"
@@ -9,6 +10,11 @@ import (
 	"github.com/Giafn/Depublic/pkg/response"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+)
+
+const (
+	roleAdmin = "Admin"
+	roleUser  = "User"
 )
 
 type UserHandler struct {
@@ -39,6 +45,32 @@ func (h *UserHandler) Login(c echo.Context) error {
 }
 
 func (h *UserHandler) Register(c echo.Context) error {
+	input := binder.UserRegisterRequest{}
+
+	if err := c.Bind(&input); err != nil {
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, "ada kesalahan input"))
+	}
+
+	if errorMessage, data := checkValidation(input); errorMessage != "" {
+		return c.JSON(http.StatusBadRequest, response.SuccessResponse(http.StatusBadRequest, errorMessage, data))
+	}
+
+	newUser := entity.NewUser(input.Email, input.Password, roleUser)
+
+	user, err := h.userService.CreateUser(newUser)
+	if err != nil {
+		fmt.Println(err)
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, err.Error()))
+	}
+
+	data := map[string]interface{}{
+		"email": user.Email,
+	}
+
+	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "sukses mendaftar sebagai user", data))
+}
+
+func (h *UserHandler) CreateUser(c echo.Context) error {
 	input := binder.UserCreateRequest{}
 
 	if err := c.Bind(&input); err != nil {
@@ -49,18 +81,18 @@ func (h *UserHandler) Register(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, response.SuccessResponse(http.StatusBadRequest, errorMessage, data))
 	}
 
-	newUser := entity.NewUser(input.Email, input.Password, input.Role, input.Alamat, input.NoHp)
+	if input.Role != roleAdmin && input.Role != roleUser {
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, "role tidak valid hanya menerima 'Admin' atau 'User'"))
+	}
+
+	newUser := entity.NewUser(input.Email, input.Password, input.Role)
 
 	user, err := h.userService.CreateUser(newUser)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 
-	data := map[string]interface{}{
-		"email": user.Email,
-	}
-
-	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "sukses mendaftar sebagai user", data))
+	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "sukses mendaftar sebagai user", user))
 }
 
 func (h *UserHandler) FindAllUser(c echo.Context) error {

@@ -29,7 +29,7 @@ func NewUserRepository(db *gorm.DB, cacheable cache.Cacheable) UserRepository {
 func (r *userRepository) FindUserByID(id uuid.UUID) (*entity.User, error) {
 	user := new(entity.User)
 
-	if err := r.db.Where("users.id = ?", id).
+	if err := r.db.Where("users.user_id = ?", id).
 		Take(user).Error; err != nil {
 		return user, err
 	}
@@ -73,6 +73,10 @@ func (r *userRepository) FindAllUser() ([]entity.User, error) {
 
 func (r *userRepository) CreateUser(user *entity.User) (*entity.User, error) {
 	if err := r.db.Create(&user).Error; err != nil {
+		return user, err
+	}
+	err := r.cacheable.Del("FindAllUsers")
+	if err != nil {
 		return user, err
 	}
 	return user, nil

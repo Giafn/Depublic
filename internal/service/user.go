@@ -5,7 +5,6 @@ import (
 
 	"github.com/Giafn/Depublic/internal/entity"
 	"github.com/Giafn/Depublic/internal/repository"
-	"github.com/Giafn/Depublic/pkg/encrypt"
 	"github.com/Giafn/Depublic/pkg/token"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
@@ -22,7 +21,6 @@ type UserService interface {
 type userService struct {
 	userRepository repository.UserRepository
 	tokenUseCase   token.TokenUseCase
-	encryptTool    encrypt.EncryptTool
 }
 
 type jwtResponse struct {
@@ -30,11 +28,10 @@ type jwtResponse struct {
 	Expired_at string `json:"expired_at"`
 }
 
-func NewUserService(userRepository repository.UserRepository, tokenUseCase token.TokenUseCase, encryptTool encrypt.EncryptTool) UserService {
+func NewUserService(userRepository repository.UserRepository, tokenUseCase token.TokenUseCase) UserService {
 	return &userService{
 		userRepository: userRepository,
 		tokenUseCase:   tokenUseCase,
-		encryptTool:    encryptTool,
 	}
 }
 
@@ -54,15 +51,10 @@ func (s *userService) Login(email string, password string) (data jwtResponse, er
 		return data, errors.New("email/password yang anda masukkan salah")
 	}
 
-	user.Alamat, _ = s.encryptTool.Decrypt(user.Alamat)
-	user.NoHp, _ = s.encryptTool.Decrypt(user.NoHp)
-
 	claims := token.JwtCustomClaims{
-		ID:     user.ID.String(),
-		Email:  user.Email,
-		Role:   user.Role,
-		Alamat: user.Alamat,
-		NoHP:   user.NoHp,
+		ID:    user.UserId.String(),
+		Email: user.Email,
+		Role:  user.Role,
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer: "Depublic-App",
 		},
@@ -80,28 +72,21 @@ func (s *userService) Login(email string, password string) (data jwtResponse, er
 }
 
 func (s *userService) CreateUser(user *entity.User) (*entity.User, error) {
+	_, err := s.userRepository.FindUserByEmail(user.Email)
+	if err == nil {
+		return nil, errors.New("email sudah terdaftar")
+	}
+
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return nil, err
 	}
 	user.Password = string(hashedPassword)
 
-	user.Alamat, err = s.encryptTool.Encrypt(user.Alamat)
-	if err != nil {
-		panic(err)
-	}
-	user.NoHp, err = s.encryptTool.Encrypt(user.NoHp)
-	if err != nil {
-		panic(err)
-	}
-
 	newUser, err := s.userRepository.CreateUser(user)
 	if err != nil {
 		return nil, err
 	}
-
-	newUser.Alamat, _ = s.encryptTool.Decrypt(newUser.Alamat)
-	newUser.NoHp, _ = s.encryptTool.Decrypt(newUser.NoHp)
 
 	return newUser, nil
 }
@@ -114,9 +99,12 @@ func (s *userService) FindAllUser() ([]entity.User, error) {
 
 	formattedUser := make([]entity.User, 0)
 	for _, v := range users {
-		v.Alamat, _ = s.encryptTool.Decrypt(v.Alamat)
-		v.NoHp, _ = s.encryptTool.Decrypt(v.NoHp)
-		formattedUser = append(formattedUser, v)
+		formattedUser = append(formattedUser, entity.User{
+			UserId:    v.UserId,
+			Email:     v.Email,
+			Role:      v.Role,
+			Auditable: v.Auditable,
+		})
 	}
 
 	return formattedUser, nil
