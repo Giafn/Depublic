@@ -31,6 +31,7 @@ func AppPublicRoutes(Handler handler.AppHandler) []*route.Route {
 
 func AppPrivateRoutes(Handler handler.AppHandler) []*route.Route {
 	userHandler := Handler.UserHandler
+	ticketHandler := Handler.TicketHandler
 
 	return []*route.Route{
 		{
@@ -42,6 +43,21 @@ func AppPrivateRoutes(Handler handler.AppHandler) []*route.Route {
 			Method:  http.MethodGet,
 			Path:    "/users/:id",
 			Handler: userHandler.FindUserByID,
+		},
+		{
+			Method:  http.MethodPost,
+			Path:    "/ticket/create",
+			Handler: ticketHandler.CreateTicket,
+		},
+		{
+			Method:  http.MethodGet,
+			Path:    "/ticket/:id",
+			Handler: ticketHandler.FindTicketByID,
+		},
+		{
+			Method:  http.MethodPost,
+			Path:    "/ticket/:id",
+			Handler: ticketHandler.UpdateTicket,
 		},
 	}
 }
