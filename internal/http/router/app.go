@@ -31,17 +31,39 @@ func AppPublicRoutes(Handler handler.AppHandler) []*route.Route {
 
 func AppPrivateRoutes(Handler handler.AppHandler) []*route.Route {
 	userHandler := Handler.UserHandler
+	profileHandler := Handler.ProfileHandler
 
 	return []*route.Route{
+	
+		{
+			Method:  http.MethodGet,
+			Path:    "/users/:id",
+			Handler: userHandler.FindUserByID,
+		},
 		{
 			Method:  http.MethodGet,
 			Path:    "/users",
 			Handler: userHandler.FindAllUser,
 		},
 		{
+			Method:  http.MethodPost,
+			Path:    "/profile",
+			Handler: profileHandler.CreateProfile,
+		},
+		{
 			Method:  http.MethodGet,
-			Path:    "/users/:id",
-			Handler: userHandler.FindUserByID,
+			Path:    "/profile",
+			Handler: profileHandler.FindCurrentUserProfile,
+		},
+		{
+			Method:  http.MethodPatch,
+			Path:    "/profile",
+			Handler: profileHandler.UpdateProfile,
+		},
+		{
+			Method:  http.MethodDelete,
+			Path:    "/profile",
+			Handler: profileHandler.DeleteProfile,
 		},
 	}
 }

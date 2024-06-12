@@ -11,12 +11,14 @@ import (
 type AppHandler struct {
 	WelcomeHandler echo.HandlerFunc
 	UserHandler    UserHandler
+	ProfileHandler ProfileHandler
 }
 
-func NewAppHandler(userHandler UserHandler) AppHandler {
+func NewAppHandler(userHandler UserHandler, proprofileHandler ProfileHandler) AppHandler {
 	return AppHandler{
 		WelcomeHandler: welcome,
 		UserHandler:    userHandler,
+		ProfileHandler: proprofileHandler,
 	}
 }
 

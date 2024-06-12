@@ -1,0 +1,7 @@
+BEGIN;
+
+DROP TYPE gender_type CASCADE;
+DROP TABLE IF EXISTS profiles;
+
+
+COMMIT;
