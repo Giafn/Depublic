@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/Giafn/Depublic/internal/entity"
@@ -21,23 +20,29 @@ func NewTransactionHandler(transactionService service.TransactionService) Transa
 }
 
 func (h *TransactionHandler) CreateTransaction(c echo.Context) error {
-    input := new(binder.TransactionCreateRequest)
+	input := new(binder.TransactionCreateRequest)
+	if err := c.Bind(input); err != nil {
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, "Invalid input"))
+	}
 
-    if err := c.Bind(input); err != nil {
-        return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, "ada kesalahan input: "+err.Error()))
-    }
+	// Get the fee from the pricing table based on event_id
+	pricing, err := h.transactionService.GetPricingByEventID(input.EventID)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, response.ErrorResponse(http.StatusInternalServerError, "Failed to get pricing"))
+	}
 
-    fmt.Printf("Input: %+v\n", input)
+	totalAmount := input.TicketQuantity * pricing.Fee
 
-    newTransaction := entity.NewTransaction(input.EventID, input.UserID, input.TicketQuantity, input.TotalAmount, input.IsPaid)
+	newTransaction := entity.NewTransaction(input.EventID, input.UserID, input.TicketQuantity, totalAmount, input.IsPaid)
 
-    transaction, err := h.transactionService.CreateTransaction(newTransaction)
-    if err != nil {
-        return c.JSON(http.StatusInternalServerError, response.ErrorResponse(http.StatusInternalServerError, err.Error()))
-    }
+	transaction, err := h.transactionService.CreateTransaction(newTransaction)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, response.ErrorResponse(http.StatusInternalServerError, err.Error()))
+	}
 
-    return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "sukses membuat transaksi", transaction))
+	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "Transaction created successfully", transaction))
 }
+
 
 func (h *TransactionHandler) FindTransactionByID(c echo.Context) error {
     idParam := c.Param("id")
@@ -90,4 +95,19 @@ func (h *TransactionHandler) UpdateTransaction(c echo.Context) error {
     }
 
     return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "sukses mengupdate transaksi", updatedTransaction))
+}
+
+func (h *TransactionHandler) DeleteTransaction(c echo.Context) error {
+    idParam := c.Param("id")
+    id, err := uuid.Parse(idParam)
+    if err != nil {
+        return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, "Invalid ID"))
+    }
+
+    err = h.transactionService.DeleteTransaction(id)
+    if err != nil {
+        return c.JSON(http.StatusInternalServerError, response.ErrorResponse(http.StatusInternalServerError, err.Error()))
+    }
+
+    return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "Transaction deleted successfully", nil))
 }

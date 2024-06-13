@@ -11,7 +11,7 @@ type Transaction struct {
     TicketQuantity int      `json:"ticket_quantity"`
     TotalAmount   int       `json:"total_amount"`
     IsPaid        bool      `json:"is_paid" gorm:"default:false"`
-    Auditable     Auditable `json:"auditable"`
+    Auditable
 }
 
 

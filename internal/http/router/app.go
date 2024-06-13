@@ -65,5 +65,10 @@ func AppPrivateRoutes(Handler handler.AppHandler) []*route.Route {
 			Path:    "/transactions/:id",
 			Handler: transactionHandler.UpdateTransaction,
 		},
+		{
+			Method:  http.MethodDelete,
+			Path:    "/transactions/:id",
+			Handler: transactionHandler.DeleteTransaction,
+		},
 	}
 }

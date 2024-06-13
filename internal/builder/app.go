@@ -18,8 +18,8 @@ func BuildAppPublicRoutes(db *gorm.DB, tokenUse token.TokenUseCase, encryptTool 
 	userService := service.NewUserService(userRepository, tokenUse, encryptTool)
 	userHandler := handler.NewUserHandler(userService)
 
-	transactionRepository := repository.NewTransactionRepository(db, nil)
-	transactionService := service.NewTransactionService(transactionRepository)
+	transactionRepository := repository.NewTransactionRepository(db)
+	transactionService := service.NewTransactionService(transactionRepository, db)
 	transactionHandler := handler.NewTransactionHandler(transactionService)
 
 	appHandler := handler.NewAppHandler(userHandler, transactionHandler)
@@ -32,8 +32,8 @@ func BuildAppPrivateRoutes(db *gorm.DB, redisDB *redis.Client, encryptTool encry
 	userService := service.NewUserService(userRepository, nil, encryptTool)
 	userHandler := handler.NewUserHandler(userService)
 
-	transactionRepository := repository.NewTransactionRepository(db, cacheable)
-	transactionService := service.NewTransactionService(transactionRepository)
+	transactionRepository := repository.NewTransactionRepository(db)
+	transactionService := service.NewTransactionService(transactionRepository, db)
 	transactionHandler := handler.NewTransactionHandler(transactionService)
 
 	appHandler := handler.NewAppHandler(userHandler, transactionHandler)
