@@ -1,6 +1,10 @@
 package validator
 
-import "github.com/go-playground/validator/v10"
+import (
+	"reflect"
+
+	"github.com/go-playground/validator/v10"
+)
 
 func Validate(input interface{}) map[string]string {
 	validate := validator.New()
@@ -11,8 +15,14 @@ func Validate(input interface{}) map[string]string {
 		}
 
 		validationErrors := make(map[string]string)
+		inputVal := reflect.ValueOf(input)
 		for _, err := range err.(validator.ValidationErrors) {
-			validationErrors[err.Field()] = err.Tag()
+			field, _ := inputVal.Type().FieldByName(err.Field())
+			jsonTag := field.Tag.Get("json")
+			if jsonTag == "" {
+				jsonTag = err.Field() // fallback to struct field name if json tag is missing
+			}
+			validationErrors[jsonTag] = err.Tag()
 		}
 		return validationErrors
 	}

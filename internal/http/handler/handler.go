@@ -12,13 +12,15 @@ type AppHandler struct {
 	WelcomeHandler     echo.HandlerFunc
 	UserHandler        UserHandler
 	TransactionHandler TransactionHandler
+	TicketHandler      TicketHandler
 }
 
-func NewAppHandler(userHandler UserHandler, transactionHandler TransactionHandler) AppHandler {
+func NewAppHandler(userHandler UserHandler, transactionHandler TransactionHandler, ticketHandler TicketHandler) AppHandler {
 	return AppHandler{
 		WelcomeHandler:     welcome,
 		UserHandler:        userHandler,
 		TransactionHandler: transactionHandler,
+		TicketHandler:      ticketHandler,
 	}
 }
 
