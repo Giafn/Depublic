@@ -1,8 +1,11 @@
 package main
 
 import (
+	"time"
+
 	"github.com/Giafn/Depublic/configs"
 	"github.com/Giafn/Depublic/internal/builder"
+	"github.com/Giafn/Depublic/pkg/background_job"
 	"github.com/Giafn/Depublic/pkg/cache"
 	"github.com/Giafn/Depublic/pkg/encrypt"
 	"github.com/Giafn/Depublic/pkg/postgres"
@@ -20,13 +23,15 @@ func main() {
 	redisDB, err := cache.InitRedis(&cfg.Redis)
 	checkError(err)
 
-	tokenUse := token.NewTokenUseCase(cfg.JWT.SecretKey)
+	go background_job.Init(cfg.Redis.Host, cfg.Redis.Port)
+
+	tokenUse := token.NewTokenUseCase(cfg.JWT.SecretKey, time.Duration(cfg.JWT.ExpiresAt)*time.Hour)
 	encryptTool := encrypt.NewEncryptTool(cfg.Encrypt.SecretKey, cfg.Encrypt.Iv)
 
-	publicRoutes := builder.BuildAppPublicRoutes(db, tokenUse, encryptTool)
-	privateRoutes := builder.BuildAppPrivateRoutes(db, redisDB, encryptTool)
+	publicRoutes := builder.BuildAppPublicRoutes(db, redisDB, tokenUse, cfg)
+	privateRoutes := builder.BuildAppPrivateRoutes(db, redisDB, encryptTool, cfg)
 
-	srv := server.NewServer("app", publicRoutes, privateRoutes, cfg.JWT.SecretKey)
+	srv := server.NewServer("app", publicRoutes, privateRoutes, cfg.JWT.SecretKey, tokenUse)
 	srv.Run(cfg.Port)
 }
 
