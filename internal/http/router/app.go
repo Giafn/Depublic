@@ -23,6 +23,7 @@ var (
 func AppPublicRoutes(Handler handler.AppHandler) []*route.Route {
 	welcome := Handler.WelcomeHandler
 	userHandler := Handler.UserHandler
+
 	return []*route.Route{
 		{
 			Method:  http.MethodGet,
@@ -59,6 +60,7 @@ func AppPublicRoutes(Handler handler.AppHandler) []*route.Route {
 
 func AppPrivateRoutes(Handler handler.AppHandler) []*route.Route {
 	userHandler := Handler.UserHandler
+	transactionHandler := Handler.TransactionHandler
 	ticketHandler := Handler.TicketHandler
 
 	return []*route.Route{
@@ -101,5 +103,30 @@ func AppPrivateRoutes(Handler handler.AppHandler) []*route.Route {
 			Handler: ticketHandler.ValidateTicket,
 		},
 		// delete
+		{
+			Method:  http.MethodPost,
+			Path:    "/transactions",
+			Handler: transactionHandler.CreateTransaction,
+		},
+		{
+			Method:  http.MethodGet,
+			Path:    "/transactions/:id",
+			Handler: transactionHandler.FindTransactionByID,
+		},
+		{
+			Method:  http.MethodGet,
+			Path:    "/transactions",
+			Handler: transactionHandler.FindAllTransactions,
+		},
+		{
+			Method:  http.MethodPut,
+			Path:    "/transactions/:id",
+			Handler: transactionHandler.UpdateTransaction,
+		},
+		{
+			Method:  http.MethodDelete,
+			Path:    "/transactions/:id",
+			Handler: transactionHandler.DeleteTransaction,
+		},
 	}
 }
