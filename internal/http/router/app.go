@@ -44,6 +44,11 @@ func AppPublicRoutes(Handler handler.AppHandler) []*route.Route {
 			Path:    "/account/verify/:id",
 			Handler: userHandler.VerifyEmail,
 		},
+		{
+			Method:  http.MethodPost,
+			Path:    "/account/resend-email-verification",
+			Handler: userHandler.ResendEmailVerification,
+		},
 	}
 }
 

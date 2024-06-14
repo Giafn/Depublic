@@ -20,6 +20,7 @@ type UserService interface {
 	FindAllUser() ([]entity.User, error)
 	FindUserByID(id uuid.UUID) (*entity.User, error)
 	VerifyEmail(id uuid.UUID) error
+	ResendEmailVerification(email string) error
 }
 
 type userService struct {
@@ -163,6 +164,29 @@ func (s *userService) VerifyEmail(id uuid.UUID) error {
 	if err != nil {
 		return err
 	}
+
+	return nil
+}
+
+func (s *userService) ResendEmailVerification(email string) error {
+	user, err := s.userRepository.FindUserByEmail(email)
+	if err != nil {
+		return err
+	}
+
+	// cek apakah user sudah terverifikasi
+	if user.IsVerified {
+		return errors.New("akun anda sudah terverifikasi")
+	}
+
+	url := fmt.Sprintf("http://%s:%s/app/api/v1/account/verify/%s", s.cfg.Host, s.cfg.Port, user.UserId.String())
+	html := "<h1>Account Confirmation</h1><p>Click <a href='" + url + "'>here</a> to confirm your account</p>"
+
+	ScheduleEmails(
+		user.Email,
+		"Account Confirmation of Registration ",
+		html,
+	)
 
 	return nil
 }

@@ -145,3 +145,25 @@ func (h *UserHandler) VerifyEmail(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "sukses verifikasi email", nil))
 }
+
+// resend email verification
+func (h *UserHandler) ResendEmailVerification(c echo.Context) error {
+	input := new(binder.UserVerifyEmailRequest)
+
+	if err := c.Bind(input); err != nil {
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, "ada kesalahan input"))
+	}
+
+	if errorMessage, data := checkValidation(input); errorMessage != "" {
+		return c.JSON(http.StatusBadRequest, response.SuccessResponse(http.StatusBadRequest, errorMessage, data))
+	}
+
+	email := input.Email
+
+	err := h.userService.ResendEmailVerification(email)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, err.Error()))
+	}
+
+	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "sukses mengirim ulang email verifikasi", nil))
+}
