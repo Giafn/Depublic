@@ -29,3 +29,7 @@ type UserDeleteRequest struct {
 type UserFindByIDRequest struct {
 	ID string `param:"id" validate:"required"`
 }
+
+type UserVerifyEmailRequest struct {
+	Email string `json:"email" validate:"required,email"`
+}

@@ -8,14 +8,16 @@ import (
 )
 
 const (
-	Admin = "Admin"
-	User  = "User"
+	Admin           = "Admin"
+	User            = "User"
+	PetugasLapangan = "Petugas Lapangan"
 )
 
 var (
-	allRoles  = []string{Admin, User}
-	onlyAdmin = []string{Admin}
-	onlyUser  = []string{User}
+	allRoles            = []string{Admin, User, PetugasLapangan}
+	onlyAdmin           = []string{Admin}
+	onlyUser            = []string{User}
+	onlyPetugasLapangan = []string{PetugasLapangan}
 )
 
 func AppPublicRoutes(Handler handler.AppHandler) []*route.Route {
@@ -37,6 +39,21 @@ func AppPublicRoutes(Handler handler.AppHandler) []*route.Route {
 			Path:    "/register",
 			Handler: userHandler.Register,
 		},
+		{
+			Method:  http.MethodGet,
+			Path:    "/account/verify/:id",
+			Handler: userHandler.VerifyEmail,
+		},
+		{
+			Method:  http.MethodPost,
+			Path:    "/account/resend-email-verification",
+			Handler: userHandler.ResendEmailVerification,
+		},
+		{
+			Method:  http.MethodPost,
+			Path:    "/logout",
+			Handler: userHandler.Logout,
+		},
 	}
 }
 
@@ -54,7 +71,7 @@ func AppPrivateRoutes(Handler handler.AppHandler) []*route.Route {
 			Method:  http.MethodGet,
 			Path:    "/users",
 			Handler: userHandler.FindAllUser,
-			Roles:   onlyAdmin,
+			Roles:   allRoles,
 		},
 		{
 			Method:  http.MethodGet,

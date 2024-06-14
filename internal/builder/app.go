@@ -1,6 +1,7 @@
 package builder
 
 import (
+	"github.com/Giafn/Depublic/configs"
 	"github.com/Giafn/Depublic/internal/http/handler"
 	"github.com/Giafn/Depublic/internal/http/router"
 	"github.com/Giafn/Depublic/internal/repository"
@@ -13,20 +14,22 @@ import (
 	"gorm.io/gorm"
 )
 
-func BuildAppPublicRoutes(db *gorm.DB, redisDB *redis.Client, tokenUseCase token.TokenUseCase) []*route.Route {
+func BuildAppPublicRoutes(db *gorm.DB, redisDB *redis.Client, tokenUseCase token.TokenUseCase, cfg *configs.Config) []*route.Route {
+	// host := "localhost"
+
 	cacheable := cache.NewCacheable(redisDB)
 	userRepository := repository.NewUserRepository(db, cacheable)
-	userService := service.NewUserService(userRepository, tokenUseCase)
+	userService := service.NewUserService(userRepository, tokenUseCase, cfg)
 	userHandler := handler.NewUserHandler(userService)
 
 	appHandler := handler.NewAppHandler(userHandler)
 	return router.AppPublicRoutes(appHandler)
 }
 
-func BuildAppPrivateRoutes(db *gorm.DB, redisDB *redis.Client, encryptTool encrypt.EncryptTool) []*route.Route {
+func BuildAppPrivateRoutes(db *gorm.DB, redisDB *redis.Client, encryptTool encrypt.EncryptTool, cfg *configs.Config) []*route.Route {
 	cacheable := cache.NewCacheable(redisDB)
 	userRepository := repository.NewUserRepository(db, cacheable)
-	userService := service.NewUserService(userRepository, nil)
+	userService := service.NewUserService(userRepository, nil, cfg)
 	userHandler := handler.NewUserHandler(userService)
 
 	appHandler := handler.NewAppHandler(userHandler)

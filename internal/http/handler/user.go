@@ -55,9 +55,9 @@ func (h *UserHandler) Register(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, response.SuccessResponse(http.StatusBadRequest, errorMessage, data))
 	}
 
-	newUser := entity.NewUser(input.Email, input.Password, roleUser)
+	newUser := entity.NewUser(input.Email, input.Password, roleUser, false)
 
-	user, err := h.userService.CreateUser(newUser)
+	user, err := h.userService.RegisterUser(newUser)
 	if err != nil {
 		fmt.Println(err)
 		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, err.Error()))
@@ -85,7 +85,7 @@ func (h *UserHandler) CreateUser(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, "role tidak valid hanya menerima 'Admin' atau 'User'"))
 	}
 
-	newUser := entity.NewUser(input.Email, input.Password, input.Role)
+	newUser := entity.NewUser(input.Email, input.Password, input.Role, true)
 
 	user, err := h.userService.CreateUser(newUser)
 	if err != nil {
@@ -123,4 +123,57 @@ func (h *UserHandler) FindUserByID(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "sukses menampilkan data user", user))
+}
+
+func (h *UserHandler) VerifyEmail(c echo.Context) error {
+	var input binder.UserFindByIDRequest
+
+	if err := c.Bind(&input); err != nil {
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, "ada kesalahan input"))
+	}
+
+	if errorMessage, data := checkValidation(input); errorMessage != "" {
+		return c.JSON(http.StatusBadRequest, response.SuccessResponse(http.StatusBadRequest, errorMessage, data))
+	}
+
+	id := uuid.MustParse(input.ID)
+
+	err := h.userService.VerifyEmail(id)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, err.Error()))
+	}
+
+	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "sukses verifikasi email", nil))
+}
+
+func (h *UserHandler) ResendEmailVerification(c echo.Context) error {
+	input := new(binder.UserVerifyEmailRequest)
+
+	if err := c.Bind(input); err != nil {
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, "ada kesalahan input"))
+	}
+
+	if errorMessage, data := checkValidation(input); errorMessage != "" {
+		return c.JSON(http.StatusBadRequest, response.SuccessResponse(http.StatusBadRequest, errorMessage, data))
+	}
+
+	email := input.Email
+
+	err := h.userService.ResendEmailVerification(email)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, err.Error()))
+	}
+
+	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "sukses mengirim ulang email verifikasi", nil))
+}
+
+func (h *UserHandler) Logout(c echo.Context) error {
+	tokenString := c.Request().Header.Get("Authorization")
+	tokenString = tokenString[7:]
+	err := h.userService.Logout(tokenString)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, err.Error()))
+	}
+
+	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "sukses logout", nil))
 }

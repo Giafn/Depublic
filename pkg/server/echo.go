@@ -21,7 +21,7 @@ type Server struct {
 	*echo.Echo
 }
 
-func NewServer(serverName string, publicRoutes, privateRoutes []*route.Route, secretKey string) *Server {
+func NewServer(serverName string, publicRoutes, privateRoutes []*route.Route, secretKey string, tokenUse token.TokenUseCase) *Server {
 	e := echo.New()
 
 	e.GET("/", func(c echo.Context) error {
@@ -38,7 +38,7 @@ func NewServer(serverName string, publicRoutes, privateRoutes []*route.Route, se
 
 	if len(privateRoutes) > 0 {
 		for _, v := range privateRoutes {
-			v1.Add(v.Method, v.Path, v.Handler, JWTProtection(secretKey), RBACMiddleware(v.Roles...))
+			v1.Add(v.Method, v.Path, v.Handler, CheckBaclistToken(tokenUse), JWTProtection(secretKey), RBACMiddleware(v.Roles...))
 		}
 	}
 
@@ -113,4 +113,23 @@ func contains(slice []string, s string) bool {
 		}
 	}
 	return false
+}
+
+func CheckBaclistToken(tokenUse token.TokenUseCase) echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			tokenString := c.Request().Header.Get("Authorization")
+			if len(tokenString) > 7 && tokenString[:7] == "Bearer " {
+				tokenString = tokenString[7:]
+			}
+
+			// Check if the token is blacklisted
+			if tokenUse.IsTokenBlacklisted(tokenString) {
+				// stop request by setting context to return unauthorized
+				return c.JSON(http.StatusUnauthorized, response.ErrorResponse(http.StatusUnauthorized, "token tidak valid"))
+			}
+
+			return next(c)
+		}
+	}
 }
