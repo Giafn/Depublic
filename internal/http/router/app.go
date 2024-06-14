@@ -50,11 +50,6 @@ func AppPublicRoutes(Handler handler.AppHandler) []*route.Route {
 			Path:    "/account/resend-email-verification",
 			Handler: userHandler.ResendEmailVerification,
 		},
-		{
-			Method:  http.MethodPost,
-			Path:    "/logout",
-			Handler: userHandler.Logout,
-		},
 	}
 }
 
@@ -64,6 +59,12 @@ func AppPrivateRoutes(Handler handler.AppHandler) []*route.Route {
 	ticketHandler := Handler.TicketHandler
 
 	return []*route.Route{
+		{
+			Method:  http.MethodPost,
+			Path:    "/logout",
+			Handler: userHandler.Logout,
+			Roles:   allRoles,
+		},
 		{
 			Method:  http.MethodPost,
 			Path:    "/users",
