@@ -68,7 +68,7 @@ func SendEmail(to, subject, body string) error {
 	cfg, err := configs.NewConfig()
 	checkError(err)
 
-	from := "example@asu.com"
+	from := cfg.SMTP.From
 	password := cfg.SMTP.Pass
 	smtpHost := cfg.SMTP.Host
 	smtpPort := 587

@@ -2,7 +2,9 @@ package service
 
 import (
 	"errors"
+	"fmt"
 
+	"github.com/Giafn/Depublic/configs"
 	"github.com/Giafn/Depublic/internal/entity"
 	"github.com/Giafn/Depublic/internal/repository"
 	"github.com/Giafn/Depublic/pkg/token"
@@ -17,11 +19,13 @@ type UserService interface {
 	CreateUser(user *entity.User) (*entity.User, error)
 	FindAllUser() ([]entity.User, error)
 	FindUserByID(id uuid.UUID) (*entity.User, error)
+	VerifyEmail(id uuid.UUID) error
 }
 
 type userService struct {
 	userRepository repository.UserRepository
 	tokenUseCase   token.TokenUseCase
+	cfg            *configs.Config
 }
 
 type jwtResponse struct {
@@ -29,10 +33,11 @@ type jwtResponse struct {
 	Expired_at string `json:"expired_at"`
 }
 
-func NewUserService(userRepository repository.UserRepository, tokenUseCase token.TokenUseCase) UserService {
+func NewUserService(userRepository repository.UserRepository, tokenUseCase token.TokenUseCase, cfg *configs.Config) UserService {
 	return &userService{
 		userRepository: userRepository,
 		tokenUseCase:   tokenUseCase,
+		cfg:            cfg,
 	}
 }
 
@@ -50,6 +55,10 @@ func (s *userService) Login(email string, password string) (data jwtResponse, er
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 	if err != nil {
 		return data, errors.New("email/password yang anda masukkan salah")
+	}
+
+	if !user.IsVerified {
+		return data, errors.New("silahkan verifikasi akun anda terlebih dahulu")
 	}
 
 	claims := token.JwtCustomClaims{
@@ -108,8 +117,8 @@ func (s *userService) RegisterUser(user *entity.User) (*entity.User, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	html := "<h1>Account Confirmation</h1><p>Click <a href='http://localhost:8080/api/v1/user/confirm/" + newUser.UserId.String() + "'>here</a> to confirm your account</p>"
+	url := fmt.Sprintf("http://%s:%s/app/api/v1/account/verify/%s", s.cfg.Host, s.cfg.Port, newUser.UserId.String())
+	html := "<h1>Account Confirmation</h1><p>Click <a href='" + url + "'>here</a> to confirm your account</p>"
 
 	ScheduleEmails(
 		user.Email,
@@ -141,4 +150,19 @@ func (s *userService) FindAllUser() ([]entity.User, error) {
 
 func (s *userService) FindUserByID(id uuid.UUID) (*entity.User, error) {
 	return s.userRepository.FindUserByID(id)
+}
+
+func (s *userService) VerifyEmail(id uuid.UUID) error {
+	user, err := s.userRepository.FindUserByID(id)
+	if err != nil {
+		return err
+	}
+
+	user.IsVerified = true
+	_, err = s.userRepository.UpdateUser(user)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
