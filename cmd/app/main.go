@@ -5,6 +5,7 @@ import (
 
 	"github.com/Giafn/Depublic/configs"
 	"github.com/Giafn/Depublic/internal/builder"
+	"github.com/Giafn/Depublic/pkg/background_job"
 	"github.com/Giafn/Depublic/pkg/cache"
 	"github.com/Giafn/Depublic/pkg/encrypt"
 	"github.com/Giafn/Depublic/pkg/postgres"
@@ -21,6 +22,8 @@ func main() {
 
 	redisDB, err := cache.InitRedis(&cfg.Redis)
 	checkError(err)
+
+	go background_job.Init(cfg)
 
 	tokenUse := token.NewTokenUseCase(cfg.JWT.SecretKey, time.Duration(cfg.JWT.ExpiresAt)*time.Hour)
 	encryptTool := encrypt.NewEncryptTool(cfg.Encrypt.SecretKey, cfg.Encrypt.Iv)

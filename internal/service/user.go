@@ -13,6 +13,7 @@ import (
 
 type UserService interface {
 	Login(email string, password string) (jwtResponse, error)
+	RegisterUser(user *entity.User) (*entity.User, error)
 	CreateUser(user *entity.User) (*entity.User, error)
 	FindAllUser() ([]entity.User, error)
 	FindUserByID(id uuid.UUID) (*entity.User, error)
@@ -87,6 +88,34 @@ func (s *userService) CreateUser(user *entity.User) (*entity.User, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	return newUser, nil
+}
+
+func (s *userService) RegisterUser(user *entity.User) (*entity.User, error) {
+	_, err := s.userRepository.FindUserByEmail(user.Email)
+	if err == nil {
+		return nil, errors.New("email sudah terdaftar")
+	}
+
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return nil, err
+	}
+	user.Password = string(hashedPassword)
+
+	newUser, err := s.userRepository.CreateUser(user)
+	if err != nil {
+		return nil, err
+	}
+
+	html := "<h1>Account Confirmation</h1><p>Click <a href='http://localhost:8080/api/v1/user/confirm/" + newUser.UserId.String() + "'>here</a> to confirm your account</p>"
+
+	ScheduleEmails(
+		user.Email,
+		"Account Confirmation of Registration ",
+		html,
+	)
 
 	return newUser, nil
 }

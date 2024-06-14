@@ -14,6 +14,7 @@ type Config struct {
 	JWT      JWTConfig      `envPrefix:"JWT_"`
 	Redis    RedisConfig    `envPrefix:"REDIS_"`
 	Encrypt  EncryptConfig  `envPrefix:"ENCRYPT_"`
+	SMTP     SMTPConfig     `envPrefix:"SMTP_"`
 }
 
 type PostgresConfig struct {
@@ -38,6 +39,14 @@ type RedisConfig struct {
 type EncryptConfig struct {
 	SecretKey string `env:"SECRET_KEY" envDefault:"secret"`
 	Iv        string `env:"IV" envDefault:"iv"`
+}
+
+type SMTPConfig struct {
+	Host string `env:"HOST" envDefault:"smtp.gmail.com"`
+	Port string `env:"PORT" envDefault:"587"`
+	User string `env:"USER" envDefault:""`
+	Pass string `env:"PASS" envDefault:""`
+	From string `env:"FROM" envDefault:"depublic@gmail.com"`
 }
 
 func NewConfig() (*Config, error) {

@@ -55,9 +55,9 @@ func (h *UserHandler) Register(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, response.SuccessResponse(http.StatusBadRequest, errorMessage, data))
 	}
 
-	newUser := entity.NewUser(input.Email, input.Password, roleUser)
+	newUser := entity.NewUser(input.Email, input.Password, roleUser, false)
 
-	user, err := h.userService.CreateUser(newUser)
+	user, err := h.userService.RegisterUser(newUser)
 	if err != nil {
 		fmt.Println(err)
 		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, err.Error()))
@@ -85,7 +85,7 @@ func (h *UserHandler) CreateUser(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, "role tidak valid hanya menerima 'Admin' atau 'User'"))
 	}
 
-	newUser := entity.NewUser(input.Email, input.Password, input.Role)
+	newUser := entity.NewUser(input.Email, input.Password, input.Role, true)
 
 	user, err := h.userService.CreateUser(newUser)
 	if err != nil {
