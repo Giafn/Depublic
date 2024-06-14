@@ -59,6 +59,7 @@ func AppPublicRoutes(Handler handler.AppHandler) []*route.Route {
 
 func AppPrivateRoutes(Handler handler.AppHandler) []*route.Route {
 	userHandler := Handler.UserHandler
+	ticketHandler := Handler.TicketHandler
 
 	return []*route.Route{
 		{
@@ -79,5 +80,26 @@ func AppPrivateRoutes(Handler handler.AppHandler) []*route.Route {
 			Handler: userHandler.FindUserByID,
 			Roles:   onlyAdmin,
 		},
+		{
+			Method:  http.MethodPost,
+			Path:    "/ticket/create",
+			Handler: ticketHandler.CreateTicket,
+		},
+		{
+			Method:  http.MethodGet,
+			Path:    "/ticket/:id",
+			Handler: ticketHandler.FindTicketByID,
+		},
+		{
+			Method:  http.MethodPost,
+			Path:    "/ticket/:id",
+			Handler: ticketHandler.UpdateTicket,
+		},
+		{
+			Method:  http.MethodPost,
+			Path:    "/ticket/:id/validate",
+			Handler: ticketHandler.ValidateTicket,
+		},
+		// delete
 	}
 }
