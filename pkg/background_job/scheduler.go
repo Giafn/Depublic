@@ -17,11 +17,11 @@ func ScheduleEmails(
 	checkError(err)
 	fmt.Println("app_depublic")
 
-	var redisPool = Pool(cfg)
+	var redisPool = Pool(cfg.Redis.Host, cfg.Redis.Port)
 
 	var enqueuer = work.NewEnqueuer("app_depublic", redisPool)
 
-	_, err = enqueuer.Enqueue("send_email", work.Q{"email_address": emailAddress, "user_id": 42, "subject": subject, "body": body})
+	_, err = enqueuer.Enqueue("send_email", work.Q{"email_address": emailAddress, "subject": subject, "body": body})
 	if err != nil {
 		log.Fatal(err)
 	}

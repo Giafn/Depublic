@@ -10,9 +10,9 @@ import (
 	"gopkg.in/gomail.v2"
 )
 
-func Init(cfg *configs.Config) {
+func Init(redisHost, redisPort string) {
 
-	var redisPool = Pool(cfg)
+	var redisPool = Pool(redisHost, redisPort)
 
 	pool := work.NewWorkerPool(Context{}, 10, "app_depublic", redisPool)
 
@@ -33,7 +33,6 @@ func Init(cfg *configs.Config) {
 
 type Context struct {
 	email   string
-	userID  int64
 	Subject string
 	Body    string
 }
@@ -44,8 +43,7 @@ func (c *Context) Log(job *work.Job, next work.NextMiddlewareFunc) error {
 }
 
 func (c *Context) CheckParam(job *work.Job, next work.NextMiddlewareFunc) error {
-	if _, ok := job.Args["user_id"]; !ok {
-		c.userID = job.ArgInt64("user_id")
+	if _, ok := job.Args["email_address"]; !ok {
 		c.email = job.ArgString("email_address")
 		c.Subject = job.ArgString("subject")
 		c.Body = job.ArgString("body")

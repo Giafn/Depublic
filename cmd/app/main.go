@@ -23,7 +23,7 @@ func main() {
 	redisDB, err := cache.InitRedis(&cfg.Redis)
 	checkError(err)
 
-	go background_job.Init(cfg)
+	go background_job.Init(cfg.Redis.Host, cfg.Redis.Port)
 
 	tokenUse := token.NewTokenUseCase(cfg.JWT.SecretKey, time.Duration(cfg.JWT.ExpiresAt)*time.Hour)
 	encryptTool := encrypt.NewEncryptTool(cfg.Encrypt.SecretKey, cfg.Encrypt.Iv)
@@ -31,7 +31,7 @@ func main() {
 	publicRoutes := builder.BuildAppPublicRoutes(db, redisDB, tokenUse, cfg)
 	privateRoutes := builder.BuildAppPrivateRoutes(db, redisDB, encryptTool, cfg)
 
-	srv := server.NewServer("app", publicRoutes, privateRoutes, cfg.JWT.SecretKey)
+	srv := server.NewServer("app", publicRoutes, privateRoutes, cfg.JWT.SecretKey, tokenUse)
 	srv.Run(cfg.Port)
 }
 

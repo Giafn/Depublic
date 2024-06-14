@@ -8,7 +8,6 @@ import (
 	"github.com/Giafn/Depublic/internal/entity"
 	"github.com/Giafn/Depublic/internal/repository"
 	"github.com/Giafn/Depublic/pkg/token"
-	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -21,6 +20,7 @@ type UserService interface {
 	FindUserByID(id uuid.UUID) (*entity.User, error)
 	VerifyEmail(id uuid.UUID) error
 	ResendEmailVerification(email string) error
+	Logout(tokenString string) error
 }
 
 type userService struct {
@@ -62,14 +62,7 @@ func (s *userService) Login(email string, password string) (data jwtResponse, er
 		return data, errors.New("silahkan verifikasi akun anda terlebih dahulu")
 	}
 
-	claims := token.JwtCustomClaims{
-		ID:    user.UserId.String(),
-		Email: user.Email,
-		Role:  user.Role,
-		RegisteredClaims: jwt.RegisteredClaims{
-			Issuer: "Depublic-App",
-		},
-	}
+	claims := s.tokenUseCase.CreateClaims(user.UserId.String(), user.Email, user.Role)
 
 	token, expiredAt, err := s.tokenUseCase.GenerateAccessToken(claims)
 	if err != nil {
@@ -174,7 +167,6 @@ func (s *userService) ResendEmailVerification(email string) error {
 		return err
 	}
 
-	// cek apakah user sudah terverifikasi
 	if user.IsVerified {
 		return errors.New("akun anda sudah terverifikasi")
 	}
@@ -189,4 +181,8 @@ func (s *userService) ResendEmailVerification(email string) error {
 	)
 
 	return nil
+}
+
+func (s *userService) Logout(tokenString string) error {
+	return s.tokenUseCase.InvalidateToken(tokenString)
 }

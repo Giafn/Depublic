@@ -146,7 +146,6 @@ func (h *UserHandler) VerifyEmail(c echo.Context) error {
 	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "sukses verifikasi email", nil))
 }
 
-// resend email verification
 func (h *UserHandler) ResendEmailVerification(c echo.Context) error {
 	input := new(binder.UserVerifyEmailRequest)
 
@@ -166,4 +165,15 @@ func (h *UserHandler) ResendEmailVerification(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "sukses mengirim ulang email verifikasi", nil))
+}
+
+func (h *UserHandler) Logout(c echo.Context) error {
+	tokenString := c.Request().Header.Get("Authorization")
+	tokenString = tokenString[7:]
+	err := h.userService.Logout(tokenString)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, err.Error()))
+	}
+
+	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "sukses logout", nil))
 }

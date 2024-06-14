@@ -49,6 +49,11 @@ func AppPublicRoutes(Handler handler.AppHandler) []*route.Route {
 			Path:    "/account/resend-email-verification",
 			Handler: userHandler.ResendEmailVerification,
 		},
+		{
+			Method:  http.MethodPost,
+			Path:    "/logout",
+			Handler: userHandler.Logout,
+		},
 	}
 }
 
@@ -66,7 +71,7 @@ func AppPrivateRoutes(Handler handler.AppHandler) []*route.Route {
 			Method:  http.MethodGet,
 			Path:    "/users",
 			Handler: userHandler.FindAllUser,
-			Roles:   onlyAdmin,
+			Roles:   allRoles,
 		},
 		{
 			Method:  http.MethodGet,
