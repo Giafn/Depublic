@@ -10,9 +10,13 @@ type TicketCreateRequest struct {
 
 type TicketUpdateRequest struct {
 	ID string `param:"id" validate:"required"`
-	Name string `json:"name"`
+	Name string `json:"name" validate:"required"`
 }
 
 type TicketFindByIdRequest struct {
+	ID string `param:"id" validate:"required"`
+}
+
+type TicketValidateRequest struct {
 	ID string `param:"id" validate:"required"`
 }

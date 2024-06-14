@@ -61,3 +61,14 @@ func UpdateTicket(oldTicket Ticket, name string) *Ticket {
 		IsUsed: oldTicket.IsUsed,
 	}
 }
+
+func ValidateTicket(oldTicket Ticket) *Ticket {
+	return &Ticket{
+		ID: oldTicket.ID,
+		IDTransaction: oldTicket.IDTransaction,
+		IDEvent: oldTicket.IDEvent,
+		Name: oldTicket.Name,
+		BookingNum: oldTicket.BookingNum,
+		IsUsed: true,
+	}
+}

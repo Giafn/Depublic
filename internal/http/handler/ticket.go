@@ -1,10 +1,12 @@
 package handler
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/Giafn/Depublic/internal/entity"
 	"github.com/Giafn/Depublic/internal/http/binder"
+	"github.com/Giafn/Depublic/internal/repository"
 	"github.com/Giafn/Depublic/internal/service"
 	"github.com/Giafn/Depublic/pkg/response"
 	"github.com/google/uuid"
@@ -109,4 +111,45 @@ func (h *TicketHandler) UpdateTicket(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "sukses update tiket", updatedTicket))
+}
+
+func (h *TicketHandler) ValidateTicket(c echo.Context) error {
+	input := binder.TicketValidateRequest{}
+
+	if err := c.Bind(&input); err != nil {
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, "ada kesalahan input"))
+	}
+
+	if errorMessage, data := checkValidation(input); errorMessage != "" {
+		return c.JSON(http.StatusBadRequest, response.SuccessResponse(http.StatusBadRequest, errorMessage, data))
+	}
+
+	id := uuid.MustParse(input.ID)
+
+	oldTicket, err := h.ticketService.FindTicketByID(id)
+
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, err.Error()))
+	}
+
+	requestedTicket := entity.ValidateTicket(*oldTicket)
+
+	validatedTicket, err := h.ticketService.ValidateTicket(requestedTicket)
+
+	if err != nil {
+		fmt.Println(err)
+		if errors.Is(err, repository.ErrTicketAlreadyValidated) {
+			return c.JSON(http.StatusConflict, response.ErrorResponse(http.StatusConflict, err.Error()))
+		}
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, err.Error()))
+	}
+
+	// fmt.Println("3")
+	// fmt.Println(validatedTicket.IsUsed)
+
+	// if err != nil {
+	// 	return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, err.Error()))
+	// }
+
+	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "sukses memvalidasi tiket", validatedTicket))
 }

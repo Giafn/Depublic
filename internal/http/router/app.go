@@ -59,5 +59,11 @@ func AppPrivateRoutes(Handler handler.AppHandler) []*route.Route {
 			Path:    "/ticket/:id",
 			Handler: ticketHandler.UpdateTicket,
 		},
+		{
+			Method:  http.MethodPost,
+			Path:    "/ticket/:id/validate",
+			Handler: ticketHandler.ValidateTicket,
+		},
+		// delete
 	}
 }

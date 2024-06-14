@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"errors"
+
 	"github.com/Giafn/Depublic/internal/entity"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -10,8 +12,9 @@ type TicketRepository interface {
 	CreateTicket(ticket *entity.Ticket) (*entity.Ticket, error)
 	FindTicketByID(id uuid.UUID) (*entity.Ticket, error)
 	UpdateTicket(ticket *entity.Ticket) (*entity.Ticket, error)
+	ValidateTicket(ticket *entity.Ticket) (*entity.Ticket, error)
 }
-
+	
 type ticketRepository struct {
 	db *gorm.DB
 }
@@ -45,6 +48,24 @@ func (r *ticketRepository) UpdateTicket(ticket *entity.Ticket) (*entity.Ticket, 
 	if ticket.Name != "" {
 		fields["name"] = ticket.Name
 	}
+
+	if err := r.db.Model(ticket).Where("id = ?", ticket.ID).Updates(fields).Error; err != nil {
+		return ticket, nil
+	}
+
+	return ticket, nil
+}
+
+var ErrTicketAlreadyValidated = errors.New("ticket is already validated")
+
+func (r *ticketRepository) ValidateTicket(ticket *entity.Ticket) (*entity.Ticket, error) {
+	if ticket.IsUsed {
+		return ticket, ErrTicketAlreadyValidated
+	}
+	
+	fields := make(map[string]interface{})
+
+	fields["is_used"] = ticket.IsUsed
 
 	if err := r.db.Model(ticket).Where("id = ?", ticket.ID).Updates(fields).Error; err != nil {
 		return ticket, nil
