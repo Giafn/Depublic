@@ -1,0 +1,693 @@
+openapi: 3.0.0
+info:
+  title: Example API
+  version: 1.0.0
+servers:
+  - url: /app/api/v1
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    MetaResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+        message:
+          type: string
+    UserProfile:
+      type: object
+      properties:
+        email:
+          type: string
+        role:
+          type: string
+        full_name:
+          type: string
+        gender:
+          type: string
+        date_of_birth:
+          type: string
+        phone_number:
+          type: string
+        profile_picture:
+          type: string
+        city:
+          type: string
+        province:
+          type: string
+    Event:
+      type: object
+      properties:
+        event_id:
+          type: string
+        name:
+          type: string
+        location:
+          type: string
+        organizer:
+          type: string
+        description:
+          type: string
+        start_time:
+          type: string
+        end_time:
+          type: string
+        quota:
+          type: string
+        remaining:
+          type: string
+        remaining_percent:
+          type: string
+    Ticket:
+      type: object
+      properties:
+        ticket_id:
+          type: string
+        event_id:
+          type: string
+        event_name:
+          type: string
+        event_location:
+          type: string
+        event_start_time:
+          type: string
+        event_end_time:
+          type: string
+        event_quota:
+          type: string
+        event_remaining:
+          type: string
+        event_remaining_percent:
+          type: string
+        ticket_status:
+          type: string
+    Submission:
+      type: object
+      properties:
+        submission_id:
+          type: string
+        event_id:
+          type: string
+        event_name:
+          type: string
+        event_location:
+          type: string
+        event_start_time:
+          type: string
+        event_end_time:
+          type: string
+        event_quota:
+          type: string
+        event_remaining:
+          type: string
+        event_remaining_percent:
+          type: string
+        ticket_status:
+          type: string
+        transaction_status:
+          type: string
+        submission_file:
+          type: string
+        status:
+          type: string
+paths:
+  /login:
+    post:
+      summary: User login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Successful login
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    $ref: '#/components/schemas/MetaResponse'
+                  data:
+                    type: object
+                    properties:
+                      token:
+                        type: string
+                      expired_at:
+                        type: string
+  /register:
+    post:
+      summary: User registration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Successful registration
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    $ref: '#/components/schemas/MetaResponse'
+                  data:
+                    type: object
+                    properties:
+                      email:
+                        type: string
+  /profile:
+    get:
+      summary: Show profile
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    $ref: '#/components/schemas/MetaResponse'
+                  data:
+                    $ref: '#/components/schemas/UserProfile'
+    put:
+      summary: Update profile
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserProfile'
+      responses:
+        '200':
+          description: Profile updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    $ref: '#/components/schemas/MetaResponse'
+    delete:
+      summary: Disable account
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Account disabled successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    $ref: '#/components/schemas/MetaResponse'
+  /users:
+    get:
+      summary: List users
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Users retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    $ref: '#/components/schemas/MetaResponse'
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/UserProfile'
+  /user:
+    post:
+      summary: Create user
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserProfile'
+      responses:
+        '200':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    $ref: '#/components/schemas/MetaResponse'
+                  data:
+                    type: object
+                    properties:
+                      user_id:
+                        type: string
+  /user/{userId}:
+    get:
+      summary: Get user detail
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User details retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    $ref: '#/components/schemas/MetaResponse'
+                  data:
+                    $ref: '#/components/schemas/UserProfile'
+    put:
+      summary: Update user
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserProfile'
+      responses:
+        '200':
+          description: User updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    $ref: '#/components/schemas/MetaResponse'
+                  data:
+                    type: object
+                    properties:
+                      user_id:
+                        type: string
+    delete:
+      summary: Delete user
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    $ref: '#/components/schemas/MetaResponse'
+  /events:
+    get:
+      summary: List events
+      parameters:
+        - name: startDate
+          in: query
+          schema:
+            type: string
+        - name: endDate
+          in: query
+          schema:
+            type: string
+        - name: name
+          in: query
+          schema:
+            type: string
+        - name: sortingBy
+          in: query
+          schema:
+            type: string
+            enum:
+              - terdekat
+              - terpopuler
+              - terbaru
+      responses:
+        '200':
+          description: Events retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    $ref: '#/components/schemas/MetaResponse'
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Event'
+  /event/{eventId}:
+    get:
+      summary: Get event detail
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Event details retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    $ref: '#/components/schemas/MetaResponse'
+                  data:
+                    $ref: '#/components/schemas/Event'
+    put:
+      summary: Update event
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Event'
+      responses:
+        '200':
+          description: Event updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    $ref: '#/components/schemas/MetaResponse'
+                  data:
+                    type: object
+                    properties:
+                      event_id:
+                        type: string
+    delete:
+      summary: Delete event
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Event deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    $ref: '#/components/schemas/MetaResponse'
+  /tickets:
+    get:
+      summary: List tickets
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Tickets retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    $ref: '#/components/schemas/MetaResponse'
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Ticket'
+  /ticket:
+    post:
+      summary: Create ticket
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                event_id:
+                  type: string
+      responses:
+        '200':
+          description: Ticket created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    $ref: '#/components/schemas/MetaResponse'
+                  data:
+                    type: object
+                    properties:
+                      ticket_id:
+                        type: string
+  /ticket/{ticketId}:
+    get:
+      summary: Get ticket detail
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: ticketId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Ticket details retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    $ref: '#/components/schemas/MetaResponse'
+                  data:
+                    $ref: '#/components/schemas/Ticket'
+    put:
+      summary: Update ticket
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: ticketId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Ticket'
+      responses:
+        '200':
+          description: Ticket updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    $ref: '#/components/schemas/MetaResponse'
+    delete:
+      summary: Delete ticket
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: ticketId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Ticket deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    $ref: '#/components/schemas/MetaResponse'
+  /submissions:
+    get:
+      summary: List submissions
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Submissions retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    $ref: '#/components/schemas/MetaResponse'
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Submission'
+  /submission:
+    post:
+      summary: Create submission
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                event_id:
+                  type: string
+                submission_file:
+                  type: string
+      responses:
+        '200':
+          description: Submission created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    $ref: '#/components/schemas/MetaResponse'
+                  data:
+                    type: object
+                    properties:
+                      submission_id:
+                        type: string
+  /submission/{submissionId}:
+    get:
+      summary: Get submission detail
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: submissionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Submission details retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    $ref: '#/components/schemas/MetaResponse'
+                  data:
+                    $ref: '#/components/schemas/Submission'
+    put:
+      summary: Update submission
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: submissionId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Submission'
+      responses:
+        '200':
+          description: Submission updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    $ref: '#/components/schemas/MetaResponse'
+    delete:
+      summary: Delete submission
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: submissionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Submission deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meta:
+                    $ref: '#/components/schemas/MetaResponse'

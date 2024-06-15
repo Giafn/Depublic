@@ -15,6 +15,7 @@ type UserRepository interface {
 	FindUserByID(id uuid.UUID) (*entity.User, error)
 	FindUserByEmail(email string) (*entity.User, error)
 	FindAllUser() ([]entity.User, error)
+	UpdateUser(user *entity.User) (*entity.User, error)
 }
 
 type userRepository struct {
@@ -29,7 +30,7 @@ func NewUserRepository(db *gorm.DB, cacheable cache.Cacheable) UserRepository {
 func (r *userRepository) FindUserByID(id uuid.UUID) (*entity.User, error) {
 	user := new(entity.User)
 
-	if err := r.db.Where("users.id = ?", id).
+	if err := r.db.Where("users.user_id = ?", id).
 		Take(user).Error; err != nil {
 		return user, err
 	}
@@ -75,5 +76,23 @@ func (r *userRepository) CreateUser(user *entity.User) (*entity.User, error) {
 	if err := r.db.Create(&user).Error; err != nil {
 		return user, err
 	}
+	err := r.cacheable.Del("FindAllUsers")
+	if err != nil {
+		return user, err
+	}
+	return user, nil
+}
+
+func (r *userRepository) UpdateUser(user *entity.User) (*entity.User, error) {
+	// Update the user in the database
+	if err := r.db.Model(&entity.User{}).Where("user_id = ?", user.UserId).Updates(user).Error; err != nil {
+		return user, err
+	}
+
+	err := r.cacheable.Del("FindAllUsers")
+	if err != nil {
+		return user, err
+	}
+
 	return user, nil
 }
