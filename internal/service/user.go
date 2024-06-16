@@ -182,6 +182,7 @@ func (s *userService) RegisterUser(input *binder.UserRegisterRequest, file *mult
 
 	_, err = s.profileRepository.CreateProfile(newProfile)
 	if err != nil {
+		upload.DeleteFile(newProfile.ProfilePicture)
 		return nil, err
 	}
 

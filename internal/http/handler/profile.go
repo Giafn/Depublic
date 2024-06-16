@@ -22,7 +22,6 @@ type profileHandler struct {
 type ProfileHandler interface {
 	FindCurrentUserProfile(c echo.Context) error
 	UpdateProfile(c echo.Context) error
-	CreateProfile(c echo.Context) error
 	DeleteProfile(c echo.Context) error
 }
 
@@ -45,49 +44,6 @@ func (h *profileHandler) FindCurrentUserProfile(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, response.ErrorResponse(http.StatusInternalServerError, err.Error()))
 	}
 	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "sukses menampilkan data profile", map[string]interface{}{
-		"id":              profile.ID,
-		"full_name":       profile.FullName,
-		"gender":          profile.Gender,
-		"date_of_birth":   profile.DateOfBirth,
-		"phone_number":    profile.PhoneNumber,
-		"profile_picture": profile.ProfilePicture,
-		"city":            profile.City,
-		"province":        profile.Province,
-		"created_at":      profile.CreatedAt,
-	}))
-}
-
-func (h *profileHandler) CreateProfile(c echo.Context) error {
-
-	dataUser, _ := c.Get("user").(*jwt.Token)
-	claims := dataUser.Claims.(*token.JwtCustomClaims)
-
-	userID := uuid.MustParse(claims.ID)
-
-	var input binder.CreateProfileRequest
-	if err := c.Bind(&input); err != nil {
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, "ada kesalahan input"))
-	}
-
-	file, err := c.FormFile("profile_picture")
-	if err != nil && err != http.ErrMissingFile {
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, err.Error()))
-	}
-
-	if errorMessage, data := checkValidation(input); errorMessage != "" {
-		return c.JSON(http.StatusBadRequest, response.SuccessResponse(http.StatusBadRequest, errorMessage, data))
-	}
-
-	dateOfBirth, _ := time.Parse("2006-01-02", input.DateOfBirth)
-
-	newProfile := entity.NewProfile(input.FullName, input.Gender, dateOfBirth, input.PhoneNumber, userID, input.City, input.Province)
-
-	profile, err := h.profileService.CreateProfile(newProfile, file)
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, response.ErrorResponse(http.StatusInternalServerError, err.Error()))
-	}
-
-	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "sukses membuat profile", map[string]interface{}{
 		"id":              profile.ID,
 		"full_name":       profile.FullName,
 		"gender":          profile.Gender,

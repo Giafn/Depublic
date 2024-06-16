@@ -98,7 +98,7 @@ func (h *UserHandler) CreateUser(c echo.Context) error {
 		"user_id": user.UserId,
 	}
 
-	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "sukses mendaftar sebagai user", data))
+	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "sukses membuat user", data))
 }
 
 func (h *UserHandler) FindAllUser(c echo.Context) error {

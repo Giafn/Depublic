@@ -85,12 +85,6 @@ func AppPrivateRoutes(Handler handler.AppHandler) []*route.Route {
 			Roles:   onlyAdmin,
 		},
 		{
-			Method:  http.MethodPost,
-			Path:    "/profile",
-			Handler: profileHandler.CreateProfile,
-			Roles:   allRoles,
-		},
-		{
 			Method:  http.MethodGet,
 			Path:    "/profile",
 			Handler: profileHandler.FindCurrentUserProfile,
