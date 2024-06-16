@@ -1,13 +1,16 @@
 package entity
 
-import "github.com/google/uuid"
+import (
+	"github.com/google/uuid"
+)
 
 type User struct {
-	UserId     uuid.UUID `json:"user_id"`
+	UserId     uuid.UUID `gorm:"type:uuid;primary_key" json:"user_id"`
 	Email      string    `json:"email"`
 	Password   string    `json:"-"`
 	Role       string    `json:"role"`
 	IsVerified bool      `json:"is_verified"`
+	Profile    Profile   `gorm:"foreignKey:UserId" json:"profile"`
 	Auditable
 }
 

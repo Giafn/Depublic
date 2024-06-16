@@ -14,13 +14,15 @@ import (
 	"gorm.io/gorm"
 )
 
-func BuildAppPublicRoutes(db *gorm.DB, redisDB *redis.Client, tokenUseCase token.TokenUseCase, cfg *configs.Config) []*route.Route {
-	// host := "localhost"
-
+func BuildAppPublicRoutes(db *gorm.DB, redisDB *redis.Client, encryptTool encrypt.EncryptTool, tokenUseCase token.TokenUseCase, cfg *configs.Config) []*route.Route {
 	cacheable := cache.NewCacheable(redisDB)
+
+	profileRepository := repository.NewProfileRepository(db, cacheable)
+
 	userRepository := repository.NewUserRepository(db, cacheable)
-	userService := service.NewUserService(userRepository, tokenUseCase, cfg)
+	userService := service.NewUserService(userRepository, profileRepository, tokenUseCase, encryptTool, cfg)
 	userHandler := handler.NewUserHandler(userService)
+
 	ticketRepository := repository.NewTicketRepository(db)
 	ticketService := service.NewTicketService(ticketRepository)
 	ticketHandler := handler.NewTicketHandler(ticketService)
@@ -35,9 +37,15 @@ func BuildAppPublicRoutes(db *gorm.DB, redisDB *redis.Client, tokenUseCase token
 
 func BuildAppPrivateRoutes(db *gorm.DB, redisDB *redis.Client, encryptTool encrypt.EncryptTool, cfg *configs.Config) []*route.Route {
 	cacheable := cache.NewCacheable(redisDB)
+
+	profileRepository := repository.NewProfileRepository(db, cacheable)
+	profileService := service.NewProfileService(profileRepository, encryptTool)
+	profileHandler := handler.NewProfileHandler(profileService)
+
 	userRepository := repository.NewUserRepository(db, cacheable)
-	userService := service.NewUserService(userRepository, nil, cfg)
+	userService := service.NewUserService(userRepository, profileRepository, nil, encryptTool, cfg)
 	userHandler := handler.NewUserHandler(userService)
+
 	ticketRepository := repository.NewTicketRepository(db)
 	ticketService := service.NewTicketService(ticketRepository)
 	ticketHandler := handler.NewTicketHandler(ticketService)
@@ -45,10 +53,6 @@ func BuildAppPrivateRoutes(db *gorm.DB, redisDB *redis.Client, encryptTool encry
 	transactionRepository := repository.NewTransactionRepository(db)
 	transactionService := service.NewTransactionService(transactionRepository, db)
 	transactionHandler := handler.NewTransactionHandler(transactionService)
-
-	profileRepository := repository.NewProfileRepository(db, cacheable)
-	profileService := service.NewProfileService(profileRepository, encryptTool)
-	profileHandler := handler.NewProfileHandler(profileService)
 
 	appHandler := handler.NewAppHandler(userHandler, transactionHandler, ticketHandler, profileHandler)
 	return router.AppPrivateRoutes(appHandler)

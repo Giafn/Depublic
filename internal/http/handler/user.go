@@ -45,19 +45,24 @@ func (h *UserHandler) Login(c echo.Context) error {
 }
 
 func (h *UserHandler) Register(c echo.Context) error {
-	input := binder.UserRegisterRequest{}
+	var input binder.UserRegisterRequest
 
 	if err := c.Bind(&input); err != nil {
+		fmt.Println(input)
+		fmt.Println(err)
 		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, "ada kesalahan input"))
+	}
+
+	file, err := c.FormFile("profile_picture")
+	if err != nil && err != http.ErrMissingFile {
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 
 	if errorMessage, data := checkValidation(input); errorMessage != "" {
 		return c.JSON(http.StatusBadRequest, response.SuccessResponse(http.StatusBadRequest, errorMessage, data))
 	}
 
-	newUser := entity.NewUser(input.Email, input.Password, roleUser, false)
-
-	user, err := h.userService.RegisterUser(newUser)
+	user, err := h.userService.RegisterUser(&input, file)
 	if err != nil {
 		fmt.Println(err)
 		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, err.Error()))
