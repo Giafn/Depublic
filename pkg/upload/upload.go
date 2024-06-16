@@ -7,20 +7,20 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
+
+	"github.com/google/uuid"
 )
 
-
 func UploadImage(file *multipart.FileHeader, folder string) (string, error) {
-	folderName := fmt.Sprintf("uploads/%s",folder)
+	file.Filename = uuid.New().String() + filepath.Ext(file.Filename)
+	folderName := fmt.Sprintf("uploads/%s", folder)
 
 	src, err := file.Open()
 
-	
 	if err != nil {
 		return "", err
-		}
-		
+	}
+
 	defer src.Close()
 
 	if file.Size > 5*1024*1024 {
@@ -28,13 +28,13 @@ func UploadImage(file *multipart.FileHeader, folder string) (string, error) {
 	}
 
 	if _, err := os.Stat(folderName); os.IsNotExist(err) {
-        err := os.MkdirAll(folderName, 0755)
-        if err != nil {
-            fmt.Println("Error creating directory: ", err)
-            return "", err
-        }
-        fmt.Println("Directory created successfully.")
-    } 
+		err := os.MkdirAll(folderName, 0755)
+		if err != nil {
+			fmt.Println("Error creating directory: ", err)
+			return "", err
+		}
+		fmt.Println("Directory created successfully.")
+	}
 
 	validExtensions := []string{".jpg", ".jpeg", ".png", ".webp"}
 	fileExtension := strings.ToLower(filepath.Ext(file.Filename))
@@ -49,25 +49,23 @@ func UploadImage(file *multipart.FileHeader, folder string) (string, error) {
 	if !isValidExtension {
 		return "", fmt.Errorf("ekstensi file tidak valid. Hanya .jpg, .jpeg, .png, .webp yang diperbolehkan")
 	}
-
-	// Generate a unique file name based on the current timestamp and original file name
-	fileName := fmt.Sprintf("%d-%s", time.Now().Unix(), file.Filename)
-	dst, err := os.Create(filepath.Join(folderName, fileName))
+	dst, err := os.Create(filepath.Join(folderName, file.Filename))
 
 	if err != nil {
 		return "", err
 	}
-	
+
 	defer dst.Close()
 
 	if _, err := io.Copy(dst, src); err != nil {
 		return "", err
 	}
 
-	return fmt.Sprintf("%s/%s", folderName, fileName), nil
+	return fmt.Sprintf("%s/%s", folderName, file.Filename), nil
 }
 func UploadFile(file *multipart.FileHeader, folder string) (string, error) {
-	folderName := fmt.Sprintf("uploads/%s",folder)
+	file.Filename = uuid.New().String() + filepath.Ext(file.Filename)
+	folderName := fmt.Sprintf("uploads/%s", folder)
 
 	src, err := file.Open()
 
@@ -82,14 +80,13 @@ func UploadFile(file *multipart.FileHeader, folder string) (string, error) {
 	defer src.Close()
 
 	if _, err := os.Stat(folderName); os.IsNotExist(err) {
-        err := os.MkdirAll(folderName, 0755)
-        if err != nil {
-            fmt.Println("Error creating directory: ", err)
-            return "", err
-        }
-        fmt.Println("Directory created successfully.")
-    } 
-
+		err := os.MkdirAll(folderName, 0755)
+		if err != nil {
+			fmt.Println("Error creating directory: ", err)
+			return "", err
+		}
+		fmt.Println("Directory created successfully.")
+	}
 
 	fileExtension := strings.ToLower(filepath.Ext(file.Filename))
 
@@ -97,8 +94,7 @@ func UploadFile(file *multipart.FileHeader, folder string) (string, error) {
 		return "", fmt.Errorf("ekstensi file tidak valid. Hanya .pdf yang diperbolehkan")
 	}
 
-	// Generate a unique file name based on the current timestamp and original file name
-	fileName := fmt.Sprintf("%d-%s", time.Now().Unix(), file.Filename)
+	fileName := file.Filename
 	dst, err := os.Create(filepath.Join(folderName, fileName))
 
 	if err != nil {
@@ -115,7 +111,7 @@ func UploadFile(file *multipart.FileHeader, folder string) (string, error) {
 }
 
 func DeleteFile(filePath string) error {
-	
+
 	absPath, err := filepath.Abs(filePath)
 	fmt.Println(absPath)
 	if err != nil {
@@ -125,7 +121,7 @@ func DeleteFile(filePath string) error {
 	if _, err := os.Stat(absPath); os.IsNotExist(err) {
 		return fmt.Errorf("file tidak ditemukan: %s", absPath)
 	}
-	
+
 	err = os.Remove(absPath)
 	if err != nil {
 		return fmt.Errorf("gagal menghapus file: %v", err)

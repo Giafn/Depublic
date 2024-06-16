@@ -21,7 +21,7 @@ import (
 type UserService interface {
 	Login(email string, password string) (jwtResponse, error)
 	RegisterUser(user *binder.UserRegisterRequest, file *multipart.FileHeader) (*entity.User, error)
-	CreateUser(user *entity.User) (*entity.User, error)
+	CreateUser(user *binder.UserCreateRequest, file *multipart.FileHeader) (*entity.User, error)
 	FindAllUser() ([]entity.User, error)
 	FindUserByID(id uuid.UUID) (*entity.User, error)
 	VerifyEmail(id uuid.UUID) error
@@ -91,7 +91,8 @@ func (s *userService) Login(email string, password string) (data jwtResponse, er
 	return data, nil
 }
 
-func (s *userService) CreateUser(user *entity.User) (*entity.User, error) {
+func (s *userService) CreateUser(input *binder.UserCreateRequest, file *multipart.FileHeader) (*entity.User, error) {
+	user := entity.NewUser(input.Email, input.Password, input.Role, true)
 	_, err := s.userRepository.FindUserByEmail(user.Email)
 	if err == nil {
 		return nil, errors.New("email sudah terdaftar")
@@ -101,6 +102,7 @@ func (s *userService) CreateUser(user *entity.User) (*entity.User, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	user.Password = string(hashedPassword)
 
 	newUser, err := s.userRepository.CreateUser(user)
@@ -108,11 +110,37 @@ func (s *userService) CreateUser(user *entity.User) (*entity.User, error) {
 		return nil, err
 	}
 
+	phone, _ := s.encryptTool.Encrypt(input.PhoneNumber)
+	dateOfBirth, _ := time.Parse("2006-01-02", input.DateOfBirth)
+
+	newProfile := entity.NewProfile(
+		input.FullName,
+		strings.ToUpper(input.Gender),
+		dateOfBirth,
+		phone,
+		newUser.UserId,
+		input.City,
+		input.Province,
+	)
+
+	if file != nil {
+		profilePic, err := upload.UploadImage(file, "profile-img")
+		if err != nil {
+			return nil, err
+		}
+		newProfile.ProfilePicture = profilePic
+	}
+
+	_, err = s.profileRepository.CreateProfile(newProfile)
+	if err != nil {
+		upload.DeleteFile(newProfile.ProfilePicture)
+		return nil, err
+	}
+
 	return newUser, nil
 }
 
 func (s *userService) RegisterUser(input *binder.UserRegisterRequest, file *multipart.FileHeader) (*entity.User, error) {
-
 	user := entity.NewUser(input.Email, input.Password, "User", false)
 	_, err := s.userRepository.FindUserByEmail(user.Email)
 	if err == nil {

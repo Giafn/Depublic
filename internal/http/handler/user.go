@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/Giafn/Depublic/internal/entity"
 	"github.com/Giafn/Depublic/internal/http/binder"
 	"github.com/Giafn/Depublic/internal/service"
 	"github.com/Giafn/Depublic/pkg/response"
@@ -48,8 +47,6 @@ func (h *UserHandler) Register(c echo.Context) error {
 	var input binder.UserRegisterRequest
 
 	if err := c.Bind(&input); err != nil {
-		fmt.Println(input)
-		fmt.Println(err)
 		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, "ada kesalahan input"))
 	}
 
@@ -76,28 +73,32 @@ func (h *UserHandler) Register(c echo.Context) error {
 }
 
 func (h *UserHandler) CreateUser(c echo.Context) error {
-	input := binder.UserCreateRequest{}
+	var input binder.UserCreateRequest
 
 	if err := c.Bind(&input); err != nil {
 		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, "ada kesalahan input"))
+	}
+
+	file, err := c.FormFile("profile_picture")
+	if err != nil && err != http.ErrMissingFile {
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 
 	if errorMessage, data := checkValidation(input); errorMessage != "" {
 		return c.JSON(http.StatusBadRequest, response.SuccessResponse(http.StatusBadRequest, errorMessage, data))
 	}
 
-	if input.Role != roleAdmin && input.Role != roleUser {
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, "role tidak valid hanya menerima 'Admin' atau 'User'"))
-	}
-
-	newUser := entity.NewUser(input.Email, input.Password, input.Role, true)
-
-	user, err := h.userService.CreateUser(newUser)
+	user, err := h.userService.CreateUser(&input, file)
 	if err != nil {
+		fmt.Println(err)
 		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 
-	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "sukses mendaftar sebagai user", user))
+	data := map[string]interface{}{
+		"user_id": user.UserId,
+	}
+
+	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "sukses mendaftar sebagai user", data))
 }
 
 func (h *UserHandler) FindAllUser(c echo.Context) error {

@@ -10,7 +10,7 @@ import (
 const (
 	Admin           = "Admin"
 	User            = "User"
-	PetugasLapangan = "Petugas Lapangan"
+	PetugasLapangan = "PetugasLapangan"
 )
 
 var (
