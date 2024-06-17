@@ -57,5 +57,9 @@ func fileReader(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, response.SuccessResponse(http.StatusBadRequest, errorMessage, data))
 	}
 
+	if input.FilePath[:7] != "uploads" {
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, "Not Found"))
+	}
+
 	return c.File(input.FilePath)
 }
