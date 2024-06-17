@@ -16,7 +16,6 @@ type profileRepository struct {
 	cacheable cache.Cacheable
 }
 
-
 type ProfileRepository interface {
 	CreateProfile(profile *entity.Profile) (*entity.Profile, error)
 	UpdateProfile(profile *entity.Profile) (*entity.Profile, error)
@@ -24,11 +23,9 @@ type ProfileRepository interface {
 	DeleteProfile(profile *entity.Profile) (bool, error)
 }
 
-
 func NewProfileRepository(db *gorm.DB, cacheable cache.Cacheable) ProfileRepository {
 	return &profileRepository{db: db, cacheable: cacheable}
 }
-
 
 func (r *profileRepository) CreateProfile(profile *entity.Profile) (*entity.Profile, error) {
 
@@ -36,19 +33,18 @@ func (r *profileRepository) CreateProfile(profile *entity.Profile) (*entity.Prof
 		return profile, err
 	}
 
-	return  profile, nil
+	return profile, nil
 }
 
 func (r *profileRepository) UpdateProfile(profile *entity.Profile) (*entity.Profile, error) {
-	
+
 	key := fmt.Sprintf("Profile-%s", profile.UserID.String())
-	
-	
+
 	fields := make(map[string]interface{})
 
 	if profile.FullName != "" {
 		fields["full_name"] = profile.FullName
-	} 
+	}
 
 	if profile.Gender != "" {
 		fields["gender"] = profile.Gender
@@ -65,7 +61,6 @@ func (r *profileRepository) UpdateProfile(profile *entity.Profile) (*entity.Prof
 	if profile.ProfilePicture != "" {
 		fields["profile_picture"] = profile.ProfilePicture
 	}
-
 
 	if err := r.db.Model(&profile).Where("user_id = ?", profile.UserID).Updates(fields).Error; err != nil {
 		return profile, err
@@ -84,7 +79,7 @@ func (r *profileRepository) UpdateProfile(profile *entity.Profile) (*entity.Prof
 func (r *profileRepository) FindProfileByUserID(userID uuid.UUID) (*entity.Profile, error) {
 
 	key := fmt.Sprintf("Profile-%s", userID.String())
-	
+
 	profile := new(entity.Profile)
 
 	data := r.cacheable.Get(key)
@@ -111,18 +106,17 @@ func (r *profileRepository) FindProfileByUserID(userID uuid.UUID) (*entity.Profi
 func (r *profileRepository) DeleteProfile(profile *entity.Profile) (bool, error) {
 
 	key := fmt.Sprintf("Profile-%s", profile.UserID.String())
-	
+
 	if err := r.db.Delete(&profile).Error; err != nil {
 		return false, err
 	}
-			
+
 	if data := r.cacheable.Get(key); data != "" {
 		err := r.cacheable.Del(key)
 		if err != nil {
 			return false, err
 		}
 	}
-		
+
 	return true, nil
 }
-	

@@ -46,6 +46,8 @@ func (h *profileHandler) FindCurrentUserProfile(c echo.Context) error {
 	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "sukses menampilkan data profile", map[string]interface{}{
 		"id":              profile.ID,
 		"full_name":       profile.FullName,
+		"email":           claims.Email,
+		"role":            claims.Role,
 		"gender":          profile.Gender,
 		"date_of_birth":   profile.DateOfBirth,
 		"phone_number":    profile.PhoneNumber,

@@ -31,6 +31,11 @@ func AppPublicRoutes(Handler handler.AppHandler) []*route.Route {
 			Handler: welcome,
 		},
 		{
+			Method:  http.MethodGet,
+			Path:    "/file/:filepath",
+			Handler: Handler.FileReader,
+		},
+		{
 			Method:  http.MethodPost,
 			Path:    "/login",
 			Handler: userHandler.Login,
