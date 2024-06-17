@@ -12,6 +12,7 @@ import (
 
 type UserRepository interface {
 	CreateUser(user *entity.User) (*entity.User, error)
+	CreateUserWithProfile(user *entity.User, profile *entity.Profile) (*entity.User, error)
 	FindUserByID(id uuid.UUID) (*entity.User, error)
 	FindUserByEmail(email string) (*entity.User, error)
 	FindAllUser() ([]entity.User, error)
@@ -80,6 +81,31 @@ func (r *userRepository) CreateUser(user *entity.User) (*entity.User, error) {
 	if err != nil {
 		return user, err
 	}
+	return user, nil
+}
+
+// create user with profile
+func (r *userRepository) CreateUserWithProfile(user *entity.User, profile *entity.Profile) (*entity.User, error) {
+	tx := r.db.Begin()
+
+	if err := tx.Create(&user).Error; err != nil {
+		tx.Rollback()
+		return user, err
+	}
+
+	profile.UserID = user.UserId
+	if err := tx.Create(&profile).Error; err != nil {
+		tx.Rollback()
+		return user, err
+	}
+
+	tx.Commit()
+
+	err := r.cacheable.Del("FindAllUsers")
+	if err != nil {
+		return user, err
+	}
+
 	return user, nil
 }
 

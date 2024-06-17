@@ -30,11 +30,10 @@ type UserService interface {
 }
 
 type userService struct {
-	userRepository    repository.UserRepository
-	profileRepository repository.ProfileRepository
-	tokenUseCase      token.TokenUseCase
-	encryptTool       encrypt.EncryptTool
-	cfg               *configs.Config
+	userRepository repository.UserRepository
+	tokenUseCase   token.TokenUseCase
+	encryptTool    encrypt.EncryptTool
+	cfg            *configs.Config
 }
 
 type jwtResponse struct {
@@ -44,17 +43,15 @@ type jwtResponse struct {
 
 func NewUserService(
 	userRepository repository.UserRepository,
-	profileRepository repository.ProfileRepository,
 	tokenUseCase token.TokenUseCase,
 	encryptTool encrypt.EncryptTool,
 	cfg *configs.Config,
 ) UserService {
 	return &userService{
-		userRepository:    userRepository,
-		profileRepository: profileRepository,
-		tokenUseCase:      tokenUseCase,
-		encryptTool:       encryptTool,
-		cfg:               cfg,
+		userRepository: userRepository,
+		tokenUseCase:   tokenUseCase,
+		encryptTool:    encryptTool,
+		cfg:            cfg,
 	}
 }
 
@@ -104,21 +101,15 @@ func (s *userService) CreateUser(input *binder.UserCreateRequest, file *multipar
 	}
 
 	user.Password = string(hashedPassword)
-
-	newUser, err := s.userRepository.CreateUser(user)
-	if err != nil {
-		return nil, err
-	}
-
 	phone, _ := s.encryptTool.Encrypt(input.PhoneNumber)
 	dateOfBirth, _ := time.Parse("2006-01-02", input.DateOfBirth)
 
-	newProfile := entity.NewProfile(
+	profile := entity.NewProfile(
 		input.FullName,
 		strings.ToUpper(input.Gender),
 		dateOfBirth,
 		phone,
-		newUser.UserId,
+		uuid.Nil,
 		input.City,
 		input.Province,
 	)
@@ -128,12 +119,12 @@ func (s *userService) CreateUser(input *binder.UserCreateRequest, file *multipar
 		if err != nil {
 			return nil, err
 		}
-		newProfile.ProfilePicture = profilePic
+		profile.ProfilePicture = profilePic
 	}
 
-	_, err = s.profileRepository.CreateProfile(newProfile)
+	newUser, err := s.userRepository.CreateUserWithProfile(user, profile)
 	if err != nil {
-		upload.DeleteFile(newProfile.ProfilePicture)
+		upload.DeleteFile(profile.ProfilePicture)
 		return nil, err
 	}
 
@@ -153,21 +144,15 @@ func (s *userService) RegisterUser(input *binder.UserRegisterRequest, file *mult
 	}
 
 	user.Password = string(hashedPassword)
-
-	newUser, err := s.userRepository.CreateUser(user)
-	if err != nil {
-		return nil, err
-	}
-
 	phone, _ := s.encryptTool.Encrypt(input.PhoneNumber)
 	dateOfBirth, _ := time.Parse("2006-01-02", input.DateOfBirth)
 
-	newProfile := entity.NewProfile(
+	profile := entity.NewProfile(
 		input.FullName,
 		strings.ToUpper(input.Gender),
 		dateOfBirth,
 		phone,
-		newUser.UserId,
+		uuid.Nil,
 		input.City,
 		input.Province,
 	)
@@ -177,12 +162,12 @@ func (s *userService) RegisterUser(input *binder.UserRegisterRequest, file *mult
 		if err != nil {
 			return nil, err
 		}
-		newProfile.ProfilePicture = profilePic
+		profile.ProfilePicture = profilePic
 	}
 
-	_, err = s.profileRepository.CreateProfile(newProfile)
+	newUser, err := s.userRepository.CreateUserWithProfile(user, profile)
 	if err != nil {
-		upload.DeleteFile(newProfile.ProfilePicture)
+		upload.DeleteFile(profile.ProfilePicture)
 		return nil, err
 	}
 

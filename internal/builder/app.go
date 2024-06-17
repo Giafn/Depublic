@@ -17,10 +17,8 @@ import (
 func BuildAppPublicRoutes(db *gorm.DB, redisDB *redis.Client, encryptTool encrypt.EncryptTool, tokenUseCase token.TokenUseCase, cfg *configs.Config) []*route.Route {
 	cacheable := cache.NewCacheable(redisDB)
 
-	profileRepository := repository.NewProfileRepository(db, cacheable)
-
 	userRepository := repository.NewUserRepository(db, cacheable)
-	userService := service.NewUserService(userRepository, profileRepository, tokenUseCase, encryptTool, cfg)
+	userService := service.NewUserService(userRepository, tokenUseCase, encryptTool, cfg)
 	userHandler := handler.NewUserHandler(userService)
 
 	ticketRepository := repository.NewTicketRepository(db)
@@ -43,7 +41,7 @@ func BuildAppPrivateRoutes(db *gorm.DB, redisDB *redis.Client, encryptTool encry
 	profileHandler := handler.NewProfileHandler(profileService)
 
 	userRepository := repository.NewUserRepository(db, cacheable)
-	userService := service.NewUserService(userRepository, profileRepository, nil, encryptTool, cfg)
+	userService := service.NewUserService(userRepository, nil, encryptTool, cfg)
 	userHandler := handler.NewUserHandler(userService)
 
 	ticketRepository := repository.NewTicketRepository(db)
