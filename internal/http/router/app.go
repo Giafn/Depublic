@@ -66,12 +66,6 @@ func AppPrivateRoutes(Handler handler.AppHandler) []*route.Route {
 
 	return []*route.Route{
 		{
-			Method:  http.MethodGet,
-			Path:    "/users/:id",
-			Handler: userHandler.FindUserByID,
-			Roles:   onlyAdmin,
-		},
-		{
 			Method:  http.MethodPost,
 			Path:    "/logout",
 			Handler: userHandler.Logout,
@@ -87,6 +81,18 @@ func AppPrivateRoutes(Handler handler.AppHandler) []*route.Route {
 			Method:  http.MethodGet,
 			Path:    "/users",
 			Handler: userHandler.FindAllUser,
+			Roles:   onlyAdmin,
+		},
+		{
+			Method:  http.MethodGet,
+			Path:    "/users/:id",
+			Handler: userHandler.FindUserByID,
+			Roles:   onlyAdmin,
+		},
+		{
+			Method:  http.MethodPatch,
+			Path:    "/users/:id",
+			Handler: userHandler.UpdateUser,
 			Roles:   onlyAdmin,
 		},
 		{

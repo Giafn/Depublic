@@ -10,7 +10,7 @@ type User struct {
 	Password   string    `json:"-"`
 	Role       string    `json:"role"`
 	IsVerified bool      `json:"is_verified"`
-	Profile    Profile   `gorm:"foreignKey:UserId" json:"profile"`
+	Profiles   Profile   `gorm:"foreignKey:UserID;references:UserId" json:"profile"`
 	Auditable
 }
 

@@ -72,42 +72,52 @@ func (h *UserHandler) Register(c echo.Context) error {
 	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "sukses mendaftar sebagai user", data))
 }
 
-func (h *UserHandler) CreateUser(c echo.Context) error {
-	var input binder.UserCreateRequest
-
-	if err := c.Bind(&input); err != nil {
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, "ada kesalahan input"))
-	}
-
-	file, err := c.FormFile("profile_picture")
-	if err != nil && err != http.ErrMissingFile {
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, err.Error()))
-	}
-
-	if errorMessage, data := checkValidation(input); errorMessage != "" {
-		return c.JSON(http.StatusBadRequest, response.SuccessResponse(http.StatusBadRequest, errorMessage, data))
-	}
-
-	user, err := h.userService.CreateUser(&input, file)
-	if err != nil {
-		fmt.Println(err)
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, err.Error()))
-	}
-
-	data := map[string]interface{}{
-		"user_id": user.UserId,
-	}
-
-	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "sukses membuat user", data))
-}
-
 func (h *UserHandler) FindAllUser(c echo.Context) error {
+
+	type responseAllUser struct {
+		UserID         uuid.UUID `json:"user_id"`
+		Email          string    `json:"email"`
+		Role           string    `json:"role"`
+		IsVerified     bool      `json:"is_verified"`
+		FullName       string    `json:"full_name"`
+		Gender         string    `json:"gender"`
+		DateOfBirth    string    `json:"date_of_birth"`
+		PhoneNumber    string    `json:"phone_number"`
+		ProfilePicture string    `json:"profile_picture"`
+		City           string    `json:"city"`
+		Province       string    `json:"province"`
+		CreatedAt      string    `json:"created_at"`
+		UpdatedAt      string    `json:"updated_at"`
+	}
+
 	users, err := h.userService.FindAllUser()
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 
-	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "sukses menampilkan data user", users))
+	// map user to response
+	usersResponse := make([]responseAllUser, 0)
+	for _, user := range users {
+		userMap := responseAllUser{
+			UserID:         user.UserId,
+			Email:          user.Email,
+			Role:           user.Role,
+			IsVerified:     user.IsVerified,
+			FullName:       user.Profiles.FullName,
+			Gender:         user.Profiles.Gender,
+			DateOfBirth:    user.Profiles.DateOfBirth.Format("2006-01-02"),
+			PhoneNumber:    user.Profiles.PhoneNumber,
+			ProfilePicture: user.Profiles.ProfilePicture,
+			City:           user.Profiles.City,
+			Province:       user.Profiles.Province,
+			CreatedAt:      user.CreatedAt.String(),
+			UpdatedAt:      user.UpdatedAt.String(),
+		}
+
+		usersResponse = append(usersResponse, userMap)
+	}
+
+	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "sukses menampilkan data user", usersResponse))
 }
 
 func (h *UserHandler) FindUserByID(c echo.Context) error {
@@ -182,4 +192,60 @@ func (h *UserHandler) Logout(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "sukses logout", nil))
+}
+
+func (h *UserHandler) CreateUser(c echo.Context) error {
+	var input binder.UserCreateRequest
+
+	if err := c.Bind(&input); err != nil {
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, "ada kesalahan input"))
+	}
+
+	file, err := c.FormFile("profile_picture")
+	if err != nil && err != http.ErrMissingFile {
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, err.Error()))
+	}
+
+	if errorMessage, data := checkValidation(input); errorMessage != "" {
+		return c.JSON(http.StatusBadRequest, response.SuccessResponse(http.StatusBadRequest, errorMessage, data))
+	}
+
+	user, err := h.userService.CreateUser(&input, file)
+	if err != nil {
+		fmt.Println(err)
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, err.Error()))
+	}
+
+	data := map[string]interface{}{
+		"user_id": user.UserId,
+	}
+
+	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "sukses membuat user", data))
+}
+
+// update user
+func (h *UserHandler) UpdateUser(c echo.Context) error {
+	var input binder.UserUpdateRequest
+
+	if err := c.Bind(&input); err != nil {
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, "ada kesalahan input"))
+	}
+
+	file, err := c.FormFile("profile_picture")
+	if err != nil && err != http.ErrMissingFile {
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, err.Error()))
+	}
+
+	if errorMessage, data := checkValidation(input); errorMessage != "" {
+		return c.JSON(http.StatusBadRequest, response.SuccessResponse(http.StatusBadRequest, errorMessage, data))
+	}
+
+	id := uuid.MustParse(input.ID)
+
+	user, err := h.userService.UpdateUser(id, &input, file)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, err.Error()))
+	}
+
+	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "sukses update user", user))
 }
