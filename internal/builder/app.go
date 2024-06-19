@@ -21,13 +21,14 @@ func BuildAppPublicRoutes(db *gorm.DB, redisDB *redis.Client, tokenUseCase token
 	userRepository := repository.NewUserRepository(db, cacheable)
 	userService := service.NewUserService(userRepository, tokenUseCase, cfg)
 	userHandler := handler.NewUserHandler(userService)
-	ticketRepository := repository.NewTicketRepository(db)
-	ticketService := service.NewTicketService(ticketRepository)
-	ticketHandler := handler.NewTicketHandler(ticketService)
-
+	
 	transactionRepository := repository.NewTransactionRepository(db)
 	transactionService := service.NewTransactionService(transactionRepository, db)
 	transactionHandler := handler.NewTransactionHandler(transactionService)
+	
+	ticketRepository := repository.NewTicketRepository(db)
+	ticketService := service.NewTicketService(ticketRepository)
+	ticketHandler := handler.NewTicketHandler(ticketService, transactionService)
 
 	appHandler := handler.NewAppHandler(userHandler, transactionHandler, ticketHandler, nil)
 	return router.AppPublicRoutes(appHandler)
@@ -38,13 +39,14 @@ func BuildAppPrivateRoutes(db *gorm.DB, redisDB *redis.Client, encryptTool encry
 	userRepository := repository.NewUserRepository(db, cacheable)
 	userService := service.NewUserService(userRepository, nil, cfg)
 	userHandler := handler.NewUserHandler(userService)
-	ticketRepository := repository.NewTicketRepository(db)
-	ticketService := service.NewTicketService(ticketRepository)
-	ticketHandler := handler.NewTicketHandler(ticketService)
-
+	
 	transactionRepository := repository.NewTransactionRepository(db)
 	transactionService := service.NewTransactionService(transactionRepository, db)
 	transactionHandler := handler.NewTransactionHandler(transactionService)
+	
+	ticketRepository := repository.NewTicketRepository(db)
+	ticketService := service.NewTicketService(ticketRepository)
+	ticketHandler := handler.NewTicketHandler(ticketService, transactionService)
 
 	profileRepository := repository.NewProfileRepository(db, cacheable)
 	profileService := service.NewProfileService(profileRepository, encryptTool)

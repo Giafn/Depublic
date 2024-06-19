@@ -17,10 +17,11 @@ import (
 
 type TicketHandler struct {
 	ticketService service.TicketService
+	transactionService service.TransactionService
 }
 
-func NewTicketHandler(ticketService service.TicketService) TicketHandler {
-	return TicketHandler{ticketService: ticketService}
+func NewTicketHandler(ticketService service.TicketService, transactionService service.TransactionService) TicketHandler {
+	return TicketHandler{ticketService: ticketService, transactionService: transactionService}
 }
 
 func (h *TicketHandler) CreateTicket(c echo.Context) error {
@@ -34,7 +35,18 @@ func (h *TicketHandler) CreateTicket(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, response.SuccessResponse(http.StatusBadRequest, errorMessage, data))
 	}
 
-	fmt.Println(input.Data)
+	idTransaction, err := uuid.Parse(input.IDTransaction)
+	fmt.Println(idTransaction)
+
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, err.Error()))
+	}
+
+	_, err = h.transactionService.FindTransactionByID(idTransaction)
+
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, err.Error()))
+	}
 
 	for i := 0; i < len(input.Data); i++ {
 
@@ -72,7 +84,11 @@ func (h *TicketHandler) FindTicketByID(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, response.SuccessResponse(http.StatusBadRequest, errorMessage, data))
 	}
 
-	id := uuid.MustParse(input.ID)
+	id, err := uuid.Parse(input.ID)
+
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, err.Error()))
+	}
 
 	ticket, err := h.ticketService.FindTicketByID(id)
 
