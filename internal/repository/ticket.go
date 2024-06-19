@@ -14,6 +14,8 @@ type TicketRepository interface {
 	UpdateTicket(ticket *entity.Ticket) (*entity.Ticket, error)
 	ValidateTicket(ticket *entity.Ticket) (*entity.Ticket, error)
 	FindTicketByBookingNumber(bookingNumber string) (*entity.Ticket, error)
+	DeleteTicketById(id uuid.UUID) error
+	DeleteTicketByBookingNumber(bookingNumber string) error
 }
 	
 type ticketRepository struct {
@@ -83,4 +85,34 @@ func (r *ticketRepository) FindTicketByBookingNumber(bookingNumber string) (*ent
 	}
 
 	return ticket, nil
+}
+
+func (r *ticketRepository) DeleteTicketById(id uuid.UUID) error {
+
+	ticket := new(entity.Ticket)
+
+	if err := r.db.Where("tickets.id = ?", id).Take(ticket).Error; err != nil {
+		return err
+	}
+
+	if err := r.db.Where("tickets.id = ?", id).Delete(ticket).Error; err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *ticketRepository) DeleteTicketByBookingNumber(bookingNumber string) error {
+
+	ticket := new(entity.Ticket)
+
+	if err := r.db.Where("tickets.booking_num = ?", bookingNumber).Take(ticket).Error; err != nil {
+		return err
+	}
+
+	if err := r.db.Where("tickets.booking_num = ?", bookingNumber).Delete(ticket).Error; err != nil {
+		return err
+	}
+
+	return nil
 }

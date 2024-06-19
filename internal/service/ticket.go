@@ -12,6 +12,8 @@ type TicketService interface {
 	UpdateTicket(ticket *entity.Ticket) (*entity.Ticket, error)
 	ValidateTicket(ticket *entity.Ticket) (*entity.Ticket, error)
 	FindTicketByBookingNumber(bookingNumber string) (*entity.Ticket, error)
+	DeleteTicketById(id uuid.UUID) error
+	DeleteTicketByBookingNumber(bookingNumber string) error
 }
 
 type ticketService struct {
@@ -55,4 +57,12 @@ func (s *ticketService) ValidateTicket(ticket *entity.Ticket) (*entity.Ticket, e
 
 func (s *ticketService) FindTicketByBookingNumber(bookingNumber string) (*entity.Ticket, error) {
 	return s.ticketRepository.FindTicketByBookingNumber(bookingNumber)
+}
+
+func (s *ticketService) DeleteTicketById(id uuid.UUID) error {
+	return s.ticketRepository.DeleteTicketById(id)
+}
+
+func (s *ticketService) DeleteTicketByBookingNumber(bookingNumber string) error {
+	return s.ticketRepository.DeleteTicketByBookingNumber(bookingNumber)
 }

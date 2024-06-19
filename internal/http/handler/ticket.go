@@ -189,3 +189,32 @@ func (h *TicketHandler) ValidateTicket(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "sukses memvalidasi tiket", validatedTicket))
 }
+
+func (h *TicketHandler) DeleteTicketById(c echo.Context) error {
+	idParam := c.Param("id")
+	id, err := uuid.Parse(idParam)
+
+	if err != nil {
+        return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, err.Error()))
+    }
+
+	err = h.ticketService.DeleteTicketById(id)
+
+	if err != nil {
+        return c.JSON(http.StatusInternalServerError, response.ErrorResponse(http.StatusInternalServerError, err.Error()))
+    }
+
+	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "tiket berhasil dihapus", nil))
+}
+
+func (h *TicketHandler) DeleteTicketByBookingNumber(c echo.Context) error {
+	bookingNumber := c.Param("bookingNum")
+
+	err := h.ticketService.DeleteTicketByBookingNumber(bookingNumber)
+
+	if err != nil {
+        return c.JSON(http.StatusInternalServerError, response.ErrorResponse(http.StatusInternalServerError, err.Error()))
+    }
+
+	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "tiket berhasil dihapus", nil))
+}

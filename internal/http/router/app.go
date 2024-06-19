@@ -145,6 +145,18 @@ func AppPrivateRoutes(Handler handler.AppHandler) []*route.Route {
 			Roles:   onlyPetugasLapangan,
 		},
 		{
+			Method:  http.MethodDelete,
+			Path:    "/ticket/:id",
+			Handler: ticketHandler.DeleteTicketById,
+			Roles:   allRoles,
+		},
+		{
+			Method:  http.MethodDelete,
+			Path:    "/ticket/:bookingNum",
+			Handler: ticketHandler.DeleteTicketByBookingNumber,
+			Roles:   allRoles,
+		},
+		{
 			Method:  http.MethodPost,
 			Path:    "/transactions",
 			Handler: transactionHandler.CreateTransaction,
