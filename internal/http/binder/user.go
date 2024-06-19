@@ -5,21 +5,42 @@ type UserLoginRequest struct {
 	Password string `json:"password" validate:"required"`
 }
 type UserRegisterRequest struct {
-	Email    string `json:"email" validate:"required,email"`
-	Password string `json:"password" validate:"required"`
+	Email          string `form:"email" validate:"required,email"`
+	Password       string `form:"password" validate:"required"`
+	FullName       string `form:"full_name" validate:"required"`
+	Gender         string `form:"gender" validate:"required,oneof=Laki-laki Perempuan"`
+	DateOfBirth    string `form:"date_of_birth" validate:"required,date"`
+	PhoneNumber    string `form:"phone_number" validate:"required"`
+	City           string `form:"city" validate:"required"`
+	Province       string `form:"province" validate:"required"`
+	ProfilePicture string `form:"profile_picture"`
 }
 
 type UserCreateRequest struct {
-	Email    string `json:"email" validate:"required,email"`
-	Password string `json:"password" validate:"required"`
-	Role     string `json:"role" validate:"required"`
+	Email          string `form:"email" validate:"required,email"`
+	Password       string `form:"password" validate:"required"`
+	Role           string `form:"role" validate:"required,oneof=User Admin PetugasLapangan"`
+	FullName       string `form:"full_name" validate:"required"`
+	Gender         string `form:"gender" validate:"required,oneof=Laki-laki Perempuan"`
+	DateOfBirth    string `form:"date_of_birth" validate:"required,date"`
+	PhoneNumber    string `form:"phone_number" validate:"required"`
+	City           string `form:"city" validate:"required"`
+	Province       string `form:"province" validate:"required"`
+	ProfilePicture string `form:"profile_picture"`
 }
 
 type UserUpdateRequest struct {
-	ID       string `param:"id" validate:"required"`
-	Email    string `json:"email" validate:"required,email"`
-	Password string `json:"password" validate:"required"`
-	Role     string `json:"role" validate:"required"`
+	ID             string `param:"id" validate:"required"`
+	Email          string `form:"email" validate:"required,email"`
+	Password       string `form:"password"`
+	Role           string `form:"role" validate:"required"`
+	FullName       string `form:"full_name" validate:"required"`
+	Gender         string `form:"gender" validate:"required,oneof=Laki-laki Perempuan"`
+	DateOfBirth    string `form:"date_of_birth" validate:"required,date"`
+	PhoneNumber    string `form:"phone_number" validate:"required"`
+	City           string `form:"city" validate:"required"`
+	Province       string `form:"province" validate:"required"`
+	ProfilePicture string `form:"profile_picture"`
 }
 
 type UserDeleteRequest struct {

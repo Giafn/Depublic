@@ -10,7 +10,7 @@ import (
 const (
 	Admin           = "Admin"
 	User            = "User"
-	PetugasLapangan = "Petugas Lapangan"
+	PetugasLapangan = "PetugasLapangan"
 )
 
 var (
@@ -29,6 +29,11 @@ func AppPublicRoutes(Handler handler.AppHandler) []*route.Route {
 			Method:  http.MethodGet,
 			Path:    "/",
 			Handler: welcome,
+		},
+		{
+			Method:  http.MethodGet,
+			Path:    "/file/:filepath",
+			Handler: Handler.FileReader,
 		},
 		{
 			Method:  http.MethodPost,
@@ -61,12 +66,6 @@ func AppPrivateRoutes(Handler handler.AppHandler) []*route.Route {
 
 	return []*route.Route{
 		{
-			Method:  http.MethodGet,
-			Path:    "/users/:id",
-			Handler: userHandler.FindUserByID,
-			Roles:   onlyAdmin,
-		},
-		{
 			Method:  http.MethodPost,
 			Path:    "/logout",
 			Handler: userHandler.Logout,
@@ -82,19 +81,19 @@ func AppPrivateRoutes(Handler handler.AppHandler) []*route.Route {
 			Method:  http.MethodGet,
 			Path:    "/users",
 			Handler: userHandler.FindAllUser,
-			Roles:   allRoles,
+			Roles:   onlyAdmin,
 		},
 		{
-			Method:  http.MethodPost,
-			Path:    "/profile",
-			Handler: profileHandler.CreateProfile,
-			Roles:   allRoles,
+			Method:  http.MethodGet,
+			Path:    "/users/:id",
+			Handler: userHandler.FindUserByID,
+			Roles:   onlyAdmin,
 		},
 		{
-			Method:  http.MethodPost,
-			Path:    "/profile",
-			Handler: profileHandler.CreateProfile,
-			Roles:   allRoles,
+			Method:  http.MethodPatch,
+			Path:    "/users/:id",
+			Handler: userHandler.UpdateUser,
+			Roles:   onlyAdmin,
 		},
 		{
 			Method:  http.MethodGet,
