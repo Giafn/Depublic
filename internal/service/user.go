@@ -325,6 +325,8 @@ func (s *userService) UpdateUser(id uuid.UUID, input *binder.UserUpdateRequest, 
 	}
 
 	updatedUser, err := s.userRepository.UpdateUserWithProfile(user, profile)
+	phoneNumber, _ := s.encryptTool.Decrypt(updatedUser.Profiles.PhoneNumber)
+	updatedUser.Profiles.PhoneNumber = phoneNumber
 	if err != nil {
 		upload.DeleteFile(profile.ProfilePicture)
 		return nil, err

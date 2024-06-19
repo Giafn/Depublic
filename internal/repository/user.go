@@ -144,6 +144,8 @@ func (r *userRepository) UpdateUserWithProfile(user *entity.User, profile *entit
 		return user, err
 	}
 
+	user.Profiles = *profile
+
 	return user, nil
 }
 

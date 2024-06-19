@@ -31,9 +31,9 @@ type UserCreateRequest struct {
 
 type UserUpdateRequest struct {
 	ID             string `param:"id" validate:"required"`
-	Email          string `json:"email" validate:"required,email"`
-	Password       string `json:"password" validate:"required"`
-	Role           string `json:"role" validate:"required"`
+	Email          string `form:"email" validate:"required,email"`
+	Password       string `form:"password"`
+	Role           string `form:"role" validate:"required"`
 	FullName       string `form:"full_name" validate:"required"`
 	Gender         string `form:"gender" validate:"required,oneof=Laki-laki Perempuan"`
 	DateOfBirth    string `form:"date_of_birth" validate:"required,date"`

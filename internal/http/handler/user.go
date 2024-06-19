@@ -11,13 +11,24 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-const (
-	roleAdmin = "Admin"
-	roleUser  = "User"
-)
-
 type UserHandler struct {
 	userService service.UserService
+}
+
+type userResponse struct {
+	UserID         uuid.UUID `json:"user_id"`
+	Email          string    `json:"email"`
+	Role           string    `json:"role"`
+	IsVerified     bool      `json:"is_verified"`
+	FullName       string    `json:"full_name"`
+	Gender         string    `json:"gender"`
+	DateOfBirth    string    `json:"date_of_birth"`
+	PhoneNumber    string    `json:"phone_number"`
+	ProfilePicture string    `json:"profile_picture"`
+	City           string    `json:"city"`
+	Province       string    `json:"province"`
+	CreatedAt      string    `json:"created_at"`
+	UpdatedAt      string    `json:"updated_at"`
 }
 
 func NewUserHandler(userService service.UserService) UserHandler {
@@ -73,32 +84,15 @@ func (h *UserHandler) Register(c echo.Context) error {
 }
 
 func (h *UserHandler) FindAllUser(c echo.Context) error {
-
-	type responseAllUser struct {
-		UserID         uuid.UUID `json:"user_id"`
-		Email          string    `json:"email"`
-		Role           string    `json:"role"`
-		IsVerified     bool      `json:"is_verified"`
-		FullName       string    `json:"full_name"`
-		Gender         string    `json:"gender"`
-		DateOfBirth    string    `json:"date_of_birth"`
-		PhoneNumber    string    `json:"phone_number"`
-		ProfilePicture string    `json:"profile_picture"`
-		City           string    `json:"city"`
-		Province       string    `json:"province"`
-		CreatedAt      string    `json:"created_at"`
-		UpdatedAt      string    `json:"updated_at"`
-	}
-
 	users, err := h.userService.FindAllUser()
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 
 	// map user to response
-	usersResponse := make([]responseAllUser, 0)
+	usersResponse := make([]userResponse, 0)
 	for _, user := range users {
-		userMap := responseAllUser{
+		userMap := userResponse{
 			UserID:         user.UserId,
 			Email:          user.Email,
 			Role:           user.Role,
@@ -247,5 +241,21 @@ func (h *UserHandler) UpdateUser(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 
-	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "sukses update user", user))
+	userResponse := userResponse{
+		UserID:         user.UserId,
+		Email:          user.Email,
+		Role:           user.Role,
+		IsVerified:     user.IsVerified,
+		FullName:       user.Profiles.FullName,
+		Gender:         user.Profiles.Gender,
+		DateOfBirth:    user.Profiles.DateOfBirth.Format("2006-01-02"),
+		PhoneNumber:    user.Profiles.PhoneNumber,
+		ProfilePicture: user.Profiles.ProfilePicture,
+		City:           user.Profiles.City,
+		Province:       user.Profiles.Province,
+		CreatedAt:      user.CreatedAt.String(),
+		UpdatedAt:      user.UpdatedAt.String(),
+	}
+
+	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "sukses update user", userResponse))
 }
