@@ -13,6 +13,7 @@ type TicketRepository interface {
 	FindTicketByID(id uuid.UUID) (*entity.Ticket, error)
 	UpdateTicket(ticket *entity.Ticket) (*entity.Ticket, error)
 	ValidateTicket(ticket *entity.Ticket) (*entity.Ticket, error)
+	FindTicketByBookingNumber(bookingNumber string) (*entity.Ticket, error)
 }
 	
 type ticketRepository struct {
@@ -69,6 +70,16 @@ func (r *ticketRepository) ValidateTicket(ticket *entity.Ticket) (*entity.Ticket
 
 	if err := r.db.Model(ticket).Where("id = ?", ticket.ID).Updates(fields).Error; err != nil {
 		return ticket, nil
+	}
+
+	return ticket, nil
+}
+
+func (r *ticketRepository) FindTicketByBookingNumber(bookingNumber string) (*entity.Ticket, error) {
+	ticket := new(entity.Ticket)
+
+	if err := r.db.Where("tickets.booking_num = ?", bookingNumber).Take(ticket).Error; err != nil {
+		return ticket, err
 	}
 
 	return ticket, nil

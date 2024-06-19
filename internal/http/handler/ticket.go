@@ -99,6 +99,26 @@ func (h *TicketHandler) FindTicketByID(c echo.Context) error {
 	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "sukses menampilkan data tiket", ticket))
 }
 
+func (h *TicketHandler) FindTicketByBookingNumber(c echo.Context) error {
+	input := binder.TicketFindByBookingNumberRequest{}
+
+	if err := c.Bind(&input); err != nil {
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, "ada kesalahan input"))
+	}
+
+	if errorMessage, data := checkValidation(input); errorMessage != "" {
+		return c.JSON(http.StatusBadRequest, response.SuccessResponse(http.StatusBadRequest, errorMessage, data))
+	}
+
+	ticket, err := h.ticketService.FindTicketByBookingNumber(input.BookingNumber)
+
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, err.Error()))
+	}
+
+	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "sukses menampilkan data tiket", ticket))
+}
+
 func (h *TicketHandler) UpdateTicket(c echo.Context) error {
 	input := binder.TicketUpdateRequest{}
 
