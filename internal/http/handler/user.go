@@ -132,7 +132,23 @@ func (h *UserHandler) FindUserByID(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 
-	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "sukses menampilkan data user", user))
+	formattedUser := userResponse{
+		UserID:         user.UserId,
+		Email:          user.Email,
+		Role:           user.Role,
+		IsVerified:     user.IsVerified,
+		FullName:       user.Profiles.FullName,
+		Gender:         user.Profiles.Gender,
+		DateOfBirth:    user.Profiles.DateOfBirth.Format("2006-01-02"),
+		PhoneNumber:    user.Profiles.PhoneNumber,
+		ProfilePicture: user.Profiles.ProfilePicture,
+		City:           user.Profiles.City,
+		Province:       user.Profiles.Province,
+		CreatedAt:      user.CreatedAt.String(),
+		UpdatedAt:      user.UpdatedAt.String(),
+	}
+
+	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "sukses menampilkan data user", formattedUser))
 }
 
 func (h *UserHandler) VerifyEmail(c echo.Context) error {

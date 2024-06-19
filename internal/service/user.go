@@ -129,7 +129,7 @@ func (s *userService) RegisterUser(input *binder.UserRegisterRequest, file *mult
 		return nil, err
 	}
 
-	url := fmt.Sprintf("http://%s:%s/app/api/v1/account/verify/%s", s.cfg.Host, s.cfg.Port, newUser.UserId.String())
+	url := fmt.Sprintf("%s:%s/app/api/v1/account/verify/%s", s.cfg.Host, s.cfg.Port, newUser.UserId.String())
 	html := "<h1>Account Confirmation</h1><p>Click <a href='" + url + "'>here</a> to confirm your account</p>"
 
 	ScheduleEmails(
@@ -160,7 +160,7 @@ func (s *userService) FindAllUser() ([]entity.User, error) {
 				Gender:         v.Profiles.Gender,
 				DateOfBirth:    v.Profiles.DateOfBirth,
 				PhoneNumber:    unEncryptedPhone,
-				ProfilePicture: v.Profiles.ProfilePicture,
+				ProfilePicture: fmt.Sprintf("%s:%s/app/api/v1/file/%s", s.cfg.Host, s.cfg.Port, v.Profiles.ProfilePicture),
 				City:           v.Profiles.City,
 				Province:       v.Profiles.Province,
 			},
@@ -172,7 +172,15 @@ func (s *userService) FindAllUser() ([]entity.User, error) {
 }
 
 func (s *userService) FindUserByID(id uuid.UUID) (*entity.User, error) {
-	return s.userRepository.FindUserByID(id)
+	user, err := s.userRepository.FindUserByID(id)
+	if err != nil {
+		return nil, err
+	}
+	phoneNumber, _ := s.encryptTool.Decrypt(user.Profiles.PhoneNumber)
+	user.Profiles.PhoneNumber = phoneNumber
+	user.Profiles.ProfilePicture = fmt.Sprintf("%s:%s/app/api/v1/file/%s", s.cfg.Host, s.cfg.Port, user.Profiles.ProfilePicture)
+
+	return user, nil
 }
 
 func (s *userService) VerifyEmail(id uuid.UUID) error {
@@ -327,6 +335,7 @@ func (s *userService) UpdateUser(id uuid.UUID, input *binder.UserUpdateRequest, 
 	updatedUser, err := s.userRepository.UpdateUserWithProfile(user, profile)
 	phoneNumber, _ := s.encryptTool.Decrypt(updatedUser.Profiles.PhoneNumber)
 	updatedUser.Profiles.PhoneNumber = phoneNumber
+	updatedUser.Profiles.ProfilePicture = fmt.Sprintf("%s:%s/app/api/v1/file/%s", s.cfg.Host, s.cfg.Port, updatedUser.Profiles.ProfilePicture)
 	if err != nil {
 		upload.DeleteFile(profile.ProfilePicture)
 		return nil, err

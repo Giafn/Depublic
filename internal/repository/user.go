@@ -33,7 +33,8 @@ func NewUserRepository(db *gorm.DB, cacheable cache.Cacheable) UserRepository {
 func (r *userRepository) FindUserByID(id uuid.UUID) (*entity.User, error) {
 	user := new(entity.User)
 
-	if err := r.db.Where("users.user_id = ?", id).
+	if err := r.db.Preload("Profiles").
+		Where("users.user_id = ?", id).
 		Take(user).Error; err != nil {
 		return user, err
 	}
@@ -43,7 +44,9 @@ func (r *userRepository) FindUserByID(id uuid.UUID) (*entity.User, error) {
 
 func (r *userRepository) FindUserByEmail(email string) (*entity.User, error) {
 	user := new(entity.User)
-	if err := r.db.Where("email = ?", email).Take(&user).Error; err != nil {
+	if err := r.db.Preload("Profiles").
+		Where("email = ?", email).
+		Take(&user).Error; err != nil {
 		return user, err
 	}
 	return user, nil
