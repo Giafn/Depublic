@@ -1,19 +1,24 @@
-# Nama file migrasi
+# Nama file migrasi & versi
 MIGRATION_NAME ?= new_migration
+# VERSION ?= 20240615102726
 
 # Direktori untuk menyimpan file migrasi
 MIGRATIONS_DIR = ./db/migrations
 APP_DIR = ./cmd/app
 
-DB_USER ?= postgres
-DB_PASSWORD ?= password
+DB_USER ?= dimskuy
+DB_PASSWORD ?= 123
 DB_HOST ?= localhost
 DB_PORT ?= 5432
 DB_NAME ?= depublic
 
 DB_URL = postgres://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=disable
 
-MIGRATE_BIN = $(shell which migrate || where migrate.exe)
+ifeq ($(OS),Windows_NT)
+    MIGRATE_BIN = $(shell where migrate.exe)
+else
+    MIGRATE_BIN = $(shell which migrate)
+endif
 
 TIMESTAMP = $(shell date +%Y%m%d%H%M%S || powershell -Command "Get-Date -Format yyyyMMddHHmmss")
 
@@ -43,11 +48,16 @@ migrate-status:
 	@echo "Checking migration status"
 	@$(MIGRATE_BIN) -path $(MIGRATIONS_DIR) -database $(DB_URL) version
 
+# .PHONY: migrate-fix
+# migrate-fix:
+# 	@echo "Fix Dirty Version"
+# 	@$(MIGRATE_BIN) -path $(MIGRATIONS_DIR) -database $(DB_URL) force $(VERSION)
+
 .PHONY: migrate-refresh
 migrate-refresh:
 	@echo "Refreshing migrations"
-	@$(MIGRATE_BIN) -path $(MIGRATIONS_DIR) -database $(DB_URL) down 1
-	@$(MIGRATE_BIN) -path $(MIGRATIONS_DIR) -database $(DB_URL) up 1
+	@$(MIGRATE_BIN) -path $(MIGRATIONS_DIR) -database $(DB_URL) down
+	@$(MIGRATE_BIN) -path $(MIGRATIONS_DIR) -database $(DB_URL) up 
 
 .PHONY: run-server
 run-server:
