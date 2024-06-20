@@ -122,6 +122,12 @@ func AppPrivateRoutes(Handler handler.AppHandler) []*route.Route {
 		},
 		{
 			Method:  http.MethodGet,
+			Path:    "/ticket",
+			Handler: ticketHandler.FindAllTickets,
+			Roles:   allRoles,
+		},
+		{
+			Method:  http.MethodGet,
 			Path:    "/ticket/:id",
 			Handler: ticketHandler.FindTicketByID,
 			Roles:   allRoles,

@@ -218,3 +218,11 @@ func (h *TicketHandler) DeleteTicketByBookingNumber(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "tiket berhasil dihapus", nil))
 }
+func (h *TicketHandler) FindAllTickets(c echo.Context) error {
+	tickets, err := h.ticketService.FindAllTickets()
+	if err != nil {
+        return c.JSON(http.StatusInternalServerError, response.ErrorResponse(http.StatusInternalServerError, err.Error()))
+    }
+
+	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "sukses menampilkan seluruh tiket", tickets))
+}

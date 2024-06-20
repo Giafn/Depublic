@@ -16,6 +16,7 @@ type TicketRepository interface {
 	FindTicketByBookingNumber(bookingNumber string) (*entity.Ticket, error)
 	DeleteTicketById(id uuid.UUID) error
 	DeleteTicketByBookingNumber(bookingNumber string) error
+	FindAllTickets() ([]entity.Ticket, error)
 }
 	
 type ticketRepository struct {
@@ -115,4 +116,12 @@ func (r *ticketRepository) DeleteTicketByBookingNumber(bookingNumber string) err
 	}
 
 	return nil
+}
+
+func (r *ticketRepository) FindAllTickets() ([]entity.Ticket, error) {
+	var tickets []entity.Ticket
+	if err := r.db.Find(&tickets).Error; err != nil {
+		return nil, err
+	}
+	return tickets, nil
 }
