@@ -15,6 +15,8 @@ type TransactionRepository interface {
 	FindAllTransactions() ([]entity.Transaction, error)
 	DeleteTransaction(id uuid.UUID) error
 	GetPricingByEventID(eventID uuid.UUID, pricingID uuid.UUID) (*entity.Pricing, error)
+	GetUsersById(id uuid.UUID) (*entity.User, error)
+	GetEventByID(id uuid.UUID) (*entity.Events, error)
 }
 
 type transactionRepository struct {
@@ -88,4 +90,21 @@ func (r *transactionRepository) GetPricingByEventID(eventID uuid.UUID, pricingID
 		return nil, errors.New("pricing not found")
 	}
 	return &pricing, nil
+}
+
+func (r *transactionRepository) GetUsersById(id uuid.UUID) (*entity.User, error) {
+	var user entity.User
+	if err := r.db.First(&user, "user_id = ?", id).Error; err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
+// GetEventByID
+func (r *transactionRepository) GetEventByID(id uuid.UUID) (*entity.Events, error) {
+	var event entity.Events
+	if err := r.db.First(&event, "id = ?", id).Error; err != nil {
+		return nil, err
+	}
+	return &event, nil
 }

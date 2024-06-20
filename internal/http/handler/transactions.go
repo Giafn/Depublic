@@ -39,12 +39,16 @@ func (h *TransactionHandler) CreateTransaction(c echo.Context) error {
 
 	userID := uuid.MustParse(claims.ID)
 
-	transaction, err := h.transactionService.CreateTransaction(input.EventID, userID, input.Tickets)
+	transaction, mustUpload, err := h.transactionService.CreateTransaction(input.EventID, userID, input.Tickets)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, response.ErrorResponse(http.StatusInternalServerError, err.Error()))
 	}
 
-	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "Transaction created successfully", transaction))
+	if mustUpload {
+		return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "Transaction created successfully, harap upload pengajuan", nil))
+	}
+
+	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "Transaction created successfully", []string{transaction.PaymentURL}))
 }
 
 func (h *TransactionHandler) FindTransactionByID(c echo.Context) error {

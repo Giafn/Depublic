@@ -15,6 +15,23 @@ type Transaction struct {
 	Auditable
 }
 
+type Events struct {
+	ID          uuid.UUID `json:"id"`
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	Organizer   string    `json:"organizer"`
+	StartTime   string    `json:"start_time"`
+	EndTime     string    `json:"end_time"`
+	MustUpload  bool      `json:"must_upload_submission"`
+	Province    string    `json:"province"`
+	City        string    `json:"city"`
+	District    string    `json:"district"`
+	FullAddress string    `json:"full_address"`
+	Latitude    float64   `json:"latitude"`
+	Longitude   float64   `json:"longitude"`
+	Auditable
+}
+
 func NewTransaction(eventID, userID uuid.UUID, ticketQuantity, totalAmount int, isPaid bool) *Transaction {
 	return &Transaction{
 		ID:             uuid.New(),
