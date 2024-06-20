@@ -5,7 +5,6 @@ CREATE TABLE IF NOT EXISTS pricings (
     name VARCHAR(255) NOT NULL,
     quota INTEGER NOT NULL,
     remaining INTEGER NOT NULL,
-    fee INTEGER NOT NULL,
-    CONSTRAINT fk_event FOREIGN KEY (event_id) REFERENCES events(id)
+    fee INTEGER NOT NULL
 );
 COMMIT;

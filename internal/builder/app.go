@@ -29,7 +29,16 @@ func BuildAppPublicRoutes(db *gorm.DB, redisDB *redis.Client, encryptTool encryp
 	transactionService := service.NewTransactionService(transactionRepository, db)
 	transactionHandler := handler.NewTransactionHandler(transactionService)
 
-	appHandler := handler.NewAppHandler(userHandler, transactionHandler, ticketHandler, nil)
+	profileRepository := repository.NewProfileRepository(db, cacheable)
+	profileService := service.NewProfileService(profileRepository, encryptTool)
+	profileHandler := handler.NewProfileHandler(profileService)
+
+	eventRepository := repository.NewEventRepository(db)
+	eventService := service.NewEventService(eventRepository)
+	eventHandler := handler.NewEventHandler(eventService)
+
+
+	appHandler := handler.NewAppHandler(userHandler, transactionHandler, ticketHandler,profileHandler, eventHandler)
 	return router.AppPublicRoutes(appHandler)
 }
 
@@ -52,6 +61,11 @@ func BuildAppPrivateRoutes(db *gorm.DB, redisDB *redis.Client, encryptTool encry
 	transactionService := service.NewTransactionService(transactionRepository, db)
 	transactionHandler := handler.NewTransactionHandler(transactionService)
 
-	appHandler := handler.NewAppHandler(userHandler, transactionHandler, ticketHandler, profileHandler)
+	eventRepository := repository.NewEventRepository(db)
+	eventService := service.NewEventService(eventRepository)
+	eventHandler := handler.NewEventHandler(eventService)
+
+
+	appHandler := handler.NewAppHandler(userHandler, transactionHandler, ticketHandler,profileHandler, eventHandler)
 	return router.AppPrivateRoutes(appHandler)
 }

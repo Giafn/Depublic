@@ -23,6 +23,7 @@ var (
 func AppPublicRoutes(Handler handler.AppHandler) []*route.Route {
 	welcome := Handler.WelcomeHandler
 	userHandler := Handler.UserHandler
+	eventHandler := Handler.EventHandler
 
 	return []*route.Route{
 		{
@@ -55,6 +56,11 @@ func AppPublicRoutes(Handler handler.AppHandler) []*route.Route {
 			Path:    "/account/resend-email-verification",
 			Handler: userHandler.ResendEmailVerification,
 		},
+		{
+			Method:  http.MethodPost,
+			Path:    "/event",
+			Handler: eventHandler.CreateNewEvent,
+		},
 	}
 }
 
@@ -62,6 +68,7 @@ func AppPrivateRoutes(Handler handler.AppHandler) []*route.Route {
 	userHandler := Handler.UserHandler
 	profileHandler := Handler.ProfileHandler
 	transactionHandler := Handler.TransactionHandler
+	// eventHandler := Handler.EventHandler
 	ticketHandler := Handler.TicketHandler
 
 	return []*route.Route{
