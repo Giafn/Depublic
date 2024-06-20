@@ -20,3 +20,7 @@ type TicketFindByIdRequest struct {
 type TicketValidateRequest struct {
 	ID string `param:"id" validate:"required"`
 }
+
+type TicketFindByBookingNumberRequest struct {
+	BookingNumber string `param:"bookingNum" validate:"required"`
+}

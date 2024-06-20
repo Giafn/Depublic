@@ -11,6 +11,10 @@ type TicketService interface {
 	FindTicketByID(id uuid.UUID) (*entity.Ticket, error)
 	UpdateTicket(ticket *entity.Ticket) (*entity.Ticket, error)
 	ValidateTicket(ticket *entity.Ticket) (*entity.Ticket, error)
+	FindTicketByBookingNumber(bookingNumber string) (*entity.Ticket, error)
+	DeleteTicketById(id uuid.UUID) error
+	DeleteTicketByBookingNumber(bookingNumber string) error
+	FindAllTickets() ([]entity.Ticket, error)
 }
 
 type ticketService struct {
@@ -50,4 +54,24 @@ func (s *ticketService) ValidateTicket(ticket *entity.Ticket) (*entity.Ticket, e
         return nil, err
     }
     return validatedTicket, nil
+}
+
+func (s *ticketService) FindTicketByBookingNumber(bookingNumber string) (*entity.Ticket, error) {
+	return s.ticketRepository.FindTicketByBookingNumber(bookingNumber)
+}
+
+func (s *ticketService) DeleteTicketById(id uuid.UUID) error {
+	return s.ticketRepository.DeleteTicketById(id)
+}
+
+func (s *ticketService) DeleteTicketByBookingNumber(bookingNumber string) error {
+	return s.ticketRepository.DeleteTicketByBookingNumber(bookingNumber)
+}
+
+func (s *ticketService) FindAllTickets() ([]entity.Ticket, error) {
+	tickets, err := s.ticketRepository.FindAllTickets()
+	if err != nil {
+		return nil, err
+	}
+	return tickets, nil
 }

@@ -21,13 +21,13 @@ func BuildAppPublicRoutes(db *gorm.DB, redisDB *redis.Client, encryptTool encryp
 	userService := service.NewUserService(userRepository, tokenUseCase, encryptTool, cfg)
 	userHandler := handler.NewUserHandler(userService)
 
-	ticketRepository := repository.NewTicketRepository(db)
-	ticketService := service.NewTicketService(ticketRepository)
-	ticketHandler := handler.NewTicketHandler(ticketService)
-
 	transactionRepository := repository.NewTransactionRepository(db)
 	transactionService := service.NewTransactionService(transactionRepository, db)
 	transactionHandler := handler.NewTransactionHandler(transactionService)
+
+	ticketRepository := repository.NewTicketRepository(db)
+	ticketService := service.NewTicketService(ticketRepository)
+	ticketHandler := handler.NewTicketHandler(ticketService, transactionService)
 
 	appHandler := handler.NewAppHandler(userHandler, transactionHandler, ticketHandler, nil)
 	return router.AppPublicRoutes(appHandler)
@@ -44,13 +44,13 @@ func BuildAppPrivateRoutes(db *gorm.DB, redisDB *redis.Client, encryptTool encry
 	userService := service.NewUserService(userRepository, nil, encryptTool, cfg)
 	userHandler := handler.NewUserHandler(userService)
 
-	ticketRepository := repository.NewTicketRepository(db)
-	ticketService := service.NewTicketService(ticketRepository)
-	ticketHandler := handler.NewTicketHandler(ticketService)
-
 	transactionRepository := repository.NewTransactionRepository(db)
 	transactionService := service.NewTransactionService(transactionRepository, db)
 	transactionHandler := handler.NewTransactionHandler(transactionService)
+
+	ticketRepository := repository.NewTicketRepository(db)
+	ticketService := service.NewTicketService(ticketRepository)
+	ticketHandler := handler.NewTicketHandler(ticketService, transactionService)
 
 	appHandler := handler.NewAppHandler(userHandler, transactionHandler, ticketHandler, profileHandler)
 	return router.AppPrivateRoutes(appHandler)

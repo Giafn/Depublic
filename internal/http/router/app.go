@@ -121,8 +121,20 @@ func AppPrivateRoutes(Handler handler.AppHandler) []*route.Route {
 		},
 		{
 			Method:  http.MethodGet,
+			Path:    "/ticket",
+			Handler: ticketHandler.FindAllTickets,
+			Roles:   allRoles,
+		},
+		{
+			Method:  http.MethodGet,
 			Path:    "/ticket/:id",
 			Handler: ticketHandler.FindTicketByID,
+			Roles:   allRoles,
+		},
+		{
+			Method:  http.MethodGet,
+			Path:    "/ticket/:bookingNum",
+			Handler: ticketHandler.FindTicketByBookingNumber,
 			Roles:   allRoles,
 		},
 		{
@@ -136,6 +148,18 @@ func AppPrivateRoutes(Handler handler.AppHandler) []*route.Route {
 			Path:    "/ticket/:id/validate",
 			Handler: ticketHandler.ValidateTicket,
 			Roles:   onlyPetugasLapangan,
+		},
+		{
+			Method:  http.MethodDelete,
+			Path:    "/ticket/:id",
+			Handler: ticketHandler.DeleteTicketById,
+			Roles:   allRoles,
+		},
+		{
+			Method:  http.MethodDelete,
+			Path:    "/ticket/:bookingNum",
+			Handler: ticketHandler.DeleteTicketByBookingNumber,
+			Roles:   allRoles,
 		},
 		{
 			Method:  http.MethodPost,

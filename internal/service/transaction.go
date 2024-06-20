@@ -1,11 +1,13 @@
 package service
 
 import (
-    "errors"
-    "github.com/Giafn/Depublic/internal/entity"
-    "github.com/Giafn/Depublic/internal/repository"
-    "github.com/google/uuid"
-    "gorm.io/gorm"
+	"errors"
+	"fmt"
+
+	"github.com/Giafn/Depublic/internal/entity"
+	"github.com/Giafn/Depublic/internal/repository"
+	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type TransactionService interface {
@@ -38,6 +40,7 @@ func (s *transactionService) FindTransactionByID(id uuid.UUID) (*entity.Transact
     transaction, err := s.transactionRepository.FindTransactionByID(id)
     if err != nil {
         return nil, err
+        fmt.Println("aaaaa")
     }
     return transaction, nil
 }
