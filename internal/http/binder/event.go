@@ -6,27 +6,28 @@ import (
 	"github.com/Giafn/Depublic/internal/entity"
 )
 
+
 type EventCreateRequest struct {
-	Name                 string           `json:"name" validate:"required"`
-	Organizer            string           `json:"organizer" validate:"required"`
-	Description          string           `json:"description" validate:"required"`
-	StartTime            string           `json:"start_time" validate:"required"`
-	EndTime              string           `json:"end_time" validate:"required"`
-	MustUploadSubmission bool             `json:"must_upload_submission" validate:"required"`
-	Province             string           `json:"province" validate:"required"`
-	City                 string           `json:"city" validate:"required"`
-	District             string           `json:"district" validate:"required"`
-	FullAddress          string           `json:"full_address" validate:"required"`
-	Latitude             float64          `json:"latitude" validate:"required"`
-	Longitude            float64          `json:"longitude" validate:"required"`
-	Pricings             []PricingRequest `json:"pricings"`
+    Name                 string           `json:"name" validate:"required"`
+    Organizer            string           `json:"organizer" validate:"required"`
+    Description          string           `json:"description" validate:"required"`
+    StartTime            string           `json:"start_time" validate:"required,date_with_time"`
+    EndTime              string           `json:"end_time" validate:"required,date_with_time"`
+    MustUploadSubmission bool             `json:"must_upload_submission" validate:"required"`
+    Province             string           `json:"province" validate:"required"`
+    City                 string           `json:"city" validate:"required"`
+    District             string           `json:"district" validate:"required"`
+    FullAddress          string           `json:"full_address" validate:"required"`
+    Latitude             float64          `json:"latitude" validate:"required"`
+    Longitude            float64          `json:"longitude" validate:"required"`
+    Pricings             []PricingRequest `json:"pricings" validate:"required,dive"`
 }
 
 type PricingRequest struct {
-	Name      string `json:"name" validate:"required"`
-	Quota     int    `json:"quota" validate:"required"`
-	Remaining int    `json:"remaining" validate:"required"`
-	Fee       int    `json:"fee" validate:"required"`
+    Name      string `json:"name" validate:"required"`
+    Quota     int    `json:"quota" validate:"required"`
+    Remaining int    `json:"remaining" validate:"required"`
+    Fee       int    `json:"fee" validate:"required"`
 }
 
 type EventUpdateRequest struct {

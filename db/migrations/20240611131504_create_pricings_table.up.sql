@@ -5,6 +5,9 @@ CREATE TABLE IF NOT EXISTS pricings (
     name VARCHAR(255) NOT NULL,
     quota INTEGER NOT NULL,
     remaining INTEGER NOT NULL,
-    fee INTEGER NOT NULL
+    fee INTEGER NOT NULL,
+     created_at TIMESTAMP DEFAULT now(),
+    updated_at TIMESTAMP DEFAULT now(),
+    deleted_at TIMESTAMP DEFAULT NULL
 );
 COMMIT;

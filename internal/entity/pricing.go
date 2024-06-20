@@ -5,7 +5,7 @@ import (
 )
 
 type Pricing struct {
-	ID        uuid.UUID `json:"pricing_id" gorm:"type:uuid"`
+	PricingId  uuid.UUID `json:"pricing_id" gorm:"type:uuid"`
 	EventID   uuid.UUID `json:"event_id" gorm:"type:uuid"`
 	Name      string    `json:"name"`
 	Quota     int       `json:"quota"`
@@ -16,7 +16,7 @@ type Pricing struct {
 
 func NewPricing(eventID uuid.UUID, name string, fee int, quota, remaining int) *Pricing {
 	return &Pricing{
-		ID:        uuid.New(),
+		PricingId:        uuid.New(),
 		EventID:   eventID,
 		Name:      name,
 		Quota:     quota,
@@ -28,7 +28,7 @@ func NewPricing(eventID uuid.UUID, name string, fee int, quota, remaining int) *
 
 func UpdatePricing(id, eventID uuid.UUID, name string, fee int, quota, remaining int) *Pricing {
 	return &Pricing{
-		ID:        id,
+		PricingId:        id,
 		EventID:   eventID,
 		Name:      name,
 		Quota:     quota,
