@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS transactions (
     ticket_quantity INTEGER NOT NULL,
     total_amount INTEGER NOT NULL,
     is_paid BOOLEAN DEFAULT FALSE,
+    payment_url TEXT DEFAULT NULL,
     created_at TIMESTAMP DEFAULT now(),
     updated_at TIMESTAMP DEFAULT now(),
     deleted_at TIMESTAMP DEFAULT NULL,
