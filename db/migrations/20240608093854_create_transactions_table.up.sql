@@ -9,7 +9,11 @@ CREATE TABLE IF NOT EXISTS transactions (
     is_paid BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT now(),
     updated_at TIMESTAMP DEFAULT now(),
-    deleted_at TIMESTAMP DEFAULT NULL
+    deleted_at TIMESTAMP DEFAULT NULL,
+    CONSTRAINT fk_event_id
+        FOREIGN KEY (event_id)
+        REFERENCES events (id)
+        ON DELETE CASCADE
 );
 
 COMMIT;

@@ -28,7 +28,7 @@ func main() {
 	tokenUse := token.NewTokenUseCase(cfg.JWT.SecretKey, time.Duration(cfg.JWT.ExpiresAt)*time.Hour)
 	encryptTool := encrypt.NewEncryptTool(cfg.Encrypt.SecretKey, cfg.Encrypt.Iv)
 
-	publicRoutes := builder.BuildAppPublicRoutes(db, redisDB, tokenUse, cfg)
+	publicRoutes := builder.BuildAppPublicRoutes(db, redisDB, encryptTool, tokenUse, cfg)
 	privateRoutes := builder.BuildAppPrivateRoutes(db, redisDB, encryptTool, cfg)
 
 	srv := server.NewServer("app", publicRoutes, privateRoutes, cfg.JWT.SecretKey, tokenUse)
