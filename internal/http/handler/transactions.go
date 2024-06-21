@@ -169,6 +169,12 @@ func (h *TransactionHandler) WebhookPayment(c echo.Context) error {
 		fmt.Println("Error updating transaction:", err)
 		return c.String(http.StatusInternalServerError, "Internal Server Error")
 	}
+	user, _ := h.transactionService.GetUsersById(transaction.UserID)
+	service.ScheduleEmails(
+		user.Email,
+		"Payment Confirmation",
+		"Your payment has been confirmed",
+	)
 
 	return c.String(http.StatusOK, "Webhook received successfully")
 }

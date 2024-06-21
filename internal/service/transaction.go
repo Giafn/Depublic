@@ -20,6 +20,7 @@ type TransactionService interface {
 	FindAllTransactions() ([]entity.Transaction, error)
 	DeleteTransaction(id uuid.UUID) error
 	CountAmountTickets(tickets []binder.Ticket, eventID uuid.UUID) (int, error)
+	GetUsersById(id uuid.UUID) (*entity.User, error)
 }
 
 type transactionService struct {
@@ -55,7 +56,7 @@ func (s *transactionService) CreateTransaction(
 		return nil, false, err
 	}
 
-	paymentUrl, err := s.RequestPayment(newTransaction, user)
+	paymentUrl, err := s.requestPayment(newTransaction, user)
 	if err != nil {
 		return nil, false, err
 	}
@@ -68,7 +69,7 @@ func (s *transactionService) CreateTransaction(
 	}
 
 	// check event submission
-	isMustUpload, err := s.CheckEventSubmission(eventID)
+	isMustUpload, err := s.checkEventSubmission(eventID)
 	if err != nil {
 		return nil, false, err
 	}
@@ -127,8 +128,7 @@ func (s *transactionService) CountAmountTickets(tickets []binder.Ticket, eventID
 	return totalAmount, nil
 }
 
-// request payment midtras
-func (s *transactionService) RequestPayment(transaction *entity.Transaction, user *entity.User) (string, error) {
+func (s *transactionService) requestPayment(transaction *entity.Transaction, user *entity.User) (string, error) {
 	snapClient := snap.Client{}
 	serverKey := s.cfg.Midtrans.ServerKey
 	snapClient.New(serverKey, midtrans.Sandbox)
@@ -158,8 +158,7 @@ func (s *transactionService) RequestPayment(transaction *entity.Transaction, use
 	return paymentUrl, nil
 }
 
-// check event submission
-func (s *transactionService) CheckEventSubmission(eventID uuid.UUID) (bool, error) {
+func (s *transactionService) checkEventSubmission(eventID uuid.UUID) (bool, error) {
 	event, err := s.transactionRepository.GetEventByID(eventID)
 	if err != nil {
 		return false, err
@@ -170,4 +169,12 @@ func (s *transactionService) CheckEventSubmission(eventID uuid.UUID) (bool, erro
 	}
 
 	return true, nil
+}
+
+func (s *transactionService) GetUsersById(id uuid.UUID) (*entity.User, error) {
+	user, err := s.transactionRepository.GetUsersById(id)
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
 }
