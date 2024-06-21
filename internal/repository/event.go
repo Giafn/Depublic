@@ -14,7 +14,7 @@ type EventRepository interface {
     FindEventByID(id uuid.UUID) (*entity.Event, error)
     FindPricingByID(id uuid.UUID) (*entity.Pricing, error)
     FindPricingByEventID(eventID uuid.UUID) ([]entity.Pricing, error)
-    GetEvents(filter map[string] interface{}, sort string)([]entity.Event, error)
+    GetEvents(filter map[string] interface{}, sort string, distance map[string]float64)([]entity.Event, error)
     UpdateEventWithPricing(event *entity.Event, pricings []entity.Pricing) (*entity.Event, error)
     UpdateEvent(event *entity.Event) (*entity.Event, error)
     UpdatePricing(pricing *entity.Pricing) (*entity.Pricing, error)
@@ -95,7 +95,7 @@ func (r *eventRepository) FindPricingByEventID(eventID uuid.UUID) ([]entity.Pric
 	return priceList, nil
 }
 
-func (r *eventRepository) GetEvents(filter map[string] interface{}, sort string)([]entity.Event, error){
+func (r *eventRepository) GetEvents(filter map[string] interface{}, sort string, distance map[string]float64)([]entity.Event, error){
     var events []entity.Event
 
     query := r.db.Preload("Pricings")
@@ -123,10 +123,6 @@ func (r *eventRepository) GetEvents(filter map[string] interface{}, sort string)
 
     if province, ok := filter["province"]; ok {
         query = query.Where("province = ?", province)
-    }
-
-    if city, ok := filter["city"]; ok {
-        query = query.Where("city = ?", city)
     }
 
     if timeStart, ok := filter["timeStart"]; ok {
@@ -162,12 +158,14 @@ func (r *eventRepository) GetEvents(filter map[string] interface{}, sort string)
             Group("events.id").
             Order("min_fee ASC")
     case "terdekat":
-        radius := 6371
-        lat := 0.5069023316903872
-        lon := 101.3985472713651
-        query = query.Select("events.*, "+
-        "(? * ACOS(SIN(RADIANS(?)) * SIN(RADIANS(latitude)) + COS(RADIANS(?)) * COS(RADIANS(latitude)) * COS(RADIANS(?) - RADIANS(longitude)))) as distance", radius, lat, lat, lon).
-        Order("distance ASC")
+        if distance != nil {
+            radius := 6371
+            lat := distance["latitude"]
+            lon := distance["longitude"]
+            query = query.Select("events.*, "+
+            "(? * ACOS(SIN(RADIANS(?)) * SIN(RADIANS(latitude)) + COS(RADIANS(?)) * COS(RADIANS(latitude)) * COS(RADIANS(?) - RADIANS(longitude)))) as distance", radius, lat, lat, lon).
+            Order("distance ASC")
+        }
     }
 
     if err := query.Find(&events).Error; err != nil {
