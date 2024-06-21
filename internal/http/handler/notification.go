@@ -101,13 +101,13 @@ func (h *NotificationHandler) DeleteSeenNotifications(c echo.Context) error {
 	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "sukses menghapus notifikasi yang sudah dilihat", isDeleted))
 }
 
-func (h *NotificationHandler) UpdateSeenNotifications(c echo.Context) error {
+func (h *NotificationHandler) MarkAllNotificationsAsSeen(c echo.Context) error {
 	dataUser, _ := c.Get("user").(*jwt.Token)
 	claims := dataUser.Claims.(*token.JwtCustomClaims)
 
 	userID := uuid.MustParse(claims.ID)
 
-	isUpdated, err := h.NotificationService.UpdateSeenAllNotification(userID)
+	isUpdated, err := h.NotificationService.MarkAllNotificationsAsSeen(userID)
 
 	if err != nil {	
 		return c.JSON(http.StatusInternalServerError, response.ErrorResponse(http.StatusInternalServerError, err.Error()))
