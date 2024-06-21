@@ -37,14 +37,14 @@ func (h *TicketHandler) CreateTicket(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, response.SuccessResponse(http.StatusBadRequest, errorMessage, data))
 	}
 
-	idTransaction, err := uuid.Parse(input.IDTransaction)
-	fmt.Println(idTransaction)
+	transactionId, err := uuid.Parse(input.TransactionID)
+	fmt.Println(transactionId)
 
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 
-	_, err = h.transactionService.FindTransactionByID(idTransaction)
+	_, err = h.transactionService.FindTransactionByID(transactionId)
 
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, err.Error()))
@@ -53,7 +53,7 @@ func (h *TicketHandler) CreateTicket(c echo.Context) error {
 	for i := 0; i < len(input.Data); i++ {
 
 		fmt.Println(input.Data[i].Name)
-		newTicket := entity.NewTicket(input.IDTransaction, input.IDEvent, input.Data[i].Name)
+		newTicket := entity.NewTicket(input.TransactionID, input.EventID, input.Data[i].Name)
 
 		fmt.Println("id trx")
 		fmt.Println(newTicket.TransactionID)
