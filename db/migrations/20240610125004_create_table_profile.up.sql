@@ -20,12 +20,7 @@ CREATE TABLE IF NOT EXISTS profiles (
     user_id UUID NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    deleted_at TIMESTAMPTZ,
-
-    CONSTRAINT fk_user
-      FOREIGN KEY(user_id) 
-      REFERENCES users(user_id) 
-      ON DELETE CASCADE
+    deleted_at TIMESTAMPTZ
 );
 
 CREATE UNIQUE INDEX unique_user_id_non_deleted ON profiles (user_id) WHERE deleted_at IS NULL;

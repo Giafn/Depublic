@@ -6,6 +6,8 @@ CREATE TABLE IF NOT EXISTS pricings (
     quota INTEGER NOT NULL,
     remaining INTEGER NOT NULL,
     fee INTEGER NOT NULL,
-    CONSTRAINT fk_event FOREIGN KEY (event_id) REFERENCES events(id)
+     created_at TIMESTAMP DEFAULT now(),
+    updated_at TIMESTAMP DEFAULT now(),
+    deleted_at TIMESTAMP DEFAULT NULL
 );
 COMMIT;
