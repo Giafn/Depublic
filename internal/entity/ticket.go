@@ -17,6 +17,7 @@ type Ticket struct {
 	Name          string `json:"name"` // nama pemilik tiket
 	BookingNum    string `json:"bookingNum"`
 	IsUsed        bool   `json:"isUsed"`
+	Auditable
 }
 
 func NewTicket(idTransaction, idEvent, name string) *Ticket {
@@ -27,6 +28,7 @@ func NewTicket(idTransaction, idEvent, name string) *Ticket {
 		Name: name,
 		BookingNum: createBookingNumber(idTransaction, idEvent, name),
 		IsUsed: false,
+        Auditable:     NewAuditable(),
 	}
 }
 
@@ -59,6 +61,7 @@ func UpdateTicket(oldTicket Ticket, name string) *Ticket {
 		Name: name,
 		BookingNum: oldTicket.BookingNum,
 		IsUsed: oldTicket.IsUsed,
+        Auditable:     UpdateAuditable(),
 	}
 }
 
@@ -70,5 +73,6 @@ func ValidateTicket(oldTicket Ticket) *Ticket {
 		Name: oldTicket.Name,
 		BookingNum: oldTicket.BookingNum,
 		IsUsed: true,
+        Auditable:     UpdateAuditable(),
 	}
 }

@@ -67,12 +67,6 @@ func (h *TicketHandler) CreateTicket(c echo.Context) error {
 	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "sukses membuat tiket", nil))
 }
 
-func (h *TicketHandler) Test(c echo.Context) error {
-	fmt.Println("halo")
-
-	return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, "testtt aja emg sengaja error"))
-}
-
 func (h *TicketHandler) FindTicketByID(c echo.Context) error {
 	input := binder.TicketFindByIdRequest{}
 
