@@ -260,7 +260,7 @@ func AppPrivateRoutes(Handler handler.AppHandler) []*route.Route {
 		{
 			Method:  http.MethodPatch,
 			Path:    "/notifications",
-			Handler: notificationHandler.UpdateSeenNotifications,
+			Handler: notificationHandler.MarkAllNotificationsAsSeen,
 			Roles:  allRoles,
 		},
 		{

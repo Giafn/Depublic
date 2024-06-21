@@ -11,8 +11,9 @@ import (
 type NotificationRepository interface {
 	FindAllNotification(userID uuid.UUID) ([]entity.Notification, error)
 	FindNotificationByID(notificationID uuid.UUID) (*entity.Notification, error)
+	FindNotificationSeen(userID uuid.UUID) ([]entity.Notification, error)
 	CreateNotification(notification *entity.Notification) (*entity.Notification, error)
-	UpdateSeenAllNotification(userID uuid.UUID) ([]entity.Notification, error)
+	MarkAllNotificationsAsSeen(userID uuid.UUID) ([]entity.Notification, error)
 	DeleteNotification(nnotification *entity.Notification) (bool, error)
 	DeleteSeenAllNotification(userID uuid.UUID) (bool, error)
 }
@@ -71,7 +72,7 @@ func (r *notificationRepository) CreateNotification(notification *entity.Notific
 	return notification, nil
 }
 
-func (r *notificationRepository) UpdateSeenAllNotification(userID uuid.UUID) ([]entity.Notification, error) {
+func (r *notificationRepository) MarkAllNotificationsAsSeen(userID uuid.UUID) ([]entity.Notification, error) {
     
 
 	if err := r.db.Model(&entity.Notification{}).Where("user_id = ?", userID).Update("is_seen", true).Error; err != nil {
@@ -94,6 +95,17 @@ func (r *notificationRepository) DeleteSeenAllNotification(userID uuid.UUID) (bo
 	}
 
 	return true, nil
+}
+
+func (r *notificationRepository) FindNotificationSeen(userID uuid.UUID) ([]entity.Notification, error) {
+
+	notifications := make([]entity.Notification, 0)
+
+	if err := r.db.Where("user_id = ? AND is_seen = ?", userID, true).Find(&notifications).Error; err != nil {
+		return notifications, err
+	}
+
+	return notifications, nil
 }
 
 func (r *notificationRepository) DeleteNotification(notification *entity.Notification) (bool, error) {
