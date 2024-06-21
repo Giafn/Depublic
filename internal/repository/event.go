@@ -3,12 +3,14 @@ package repository
 import (
 	"github.com/Giafn/Depublic/internal/entity"
 	"gorm.io/gorm"
-	// "github.com/google/uuid"
+	"github.com/google/uuid"
 )
 
 type EventRepository interface {
     CreateEvent(event *entity.Event,  pricings []entity.Pricing) (*entity.Event, error)
     CreatePricing(pricing *entity.Pricing) error
+    FindEventByID(id uuid.UUID) (*entity.Event, error)
+    FindPricingByEventID(eventID uuid.UUID) ([]entity.Pricing, error)
 }
 
 type eventRepository struct {
@@ -56,4 +58,20 @@ func (r *eventRepository) CreateEvent(event *entity.Event, pricings []entity.Pri
 
 func (r *eventRepository) CreatePricing(pricing *entity.Pricing) error {
     return r.db.Create(pricing).Error
+}
+
+func (r *eventRepository) FindEventByID(id uuid.UUID) (*entity.Event, error) {
+	var event entity.Event
+	if err := r.db.Preload("Pricings").First(&event, "id = ?", id).Error; err != nil {
+		return nil, err
+	}
+	return &event, nil
+}
+
+func (r *eventRepository) FindPricingByEventID(eventID uuid.UUID) ([]entity.Pricing, error) {
+	var priceList []entity.Pricing
+	if err := r.db.Where("event_id = ?",eventID).Find(&priceList).Error; err != nil {
+		return nil, err
+	}
+	return priceList, nil
 }

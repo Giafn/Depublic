@@ -13,7 +13,7 @@ type EventCreateRequest struct {
     Description          string           `json:"description" validate:"required"`
     StartTime            string           `json:"start_time" validate:"required,date_with_time"`
     EndTime              string           `json:"end_time" validate:"required,date_with_time"`
-    MustUploadSubmission bool             `json:"must_upload_submission" validate:"required"`
+    MustUploadSubmission bool             `json:"must_upload_submission"`
     Province             string           `json:"province" validate:"required"`
     City                 string           `json:"city" validate:"required"`
     District             string           `json:"district" validate:"required"`
@@ -28,6 +28,10 @@ type PricingRequest struct {
     Quota     int    `json:"quota" validate:"required"`
     Remaining int    `json:"remaining" validate:"required"`
     Fee       int    `json:"fee" validate:"required"`
+}
+
+type EventFindById struct {
+	ID string `param:"id" validate:"required"`
 }
 
 type EventUpdateRequest struct {

@@ -27,18 +27,17 @@ func (h *EventHandler) CreateNewEvent(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 
-	 if errorMessage, data := checkValidation(input); errorMessage != "" {
+	if errorMessage, data := checkValidation(input); errorMessage != "" {
 		return c.JSON(http.StatusBadRequest, response.SuccessResponse(http.StatusBadRequest, errorMessage, data))
-	} 
+	}
 
-	
 	startTime, _ := time.Parse("2006-01-02 15:04:05", input.StartTime)
 	endTime, _ := time.Parse("2006-01-02 15:04:05", input.EndTime)
 	event := entity.NewEvent(input.Name, input.Organizer, input.Description, startTime, endTime, input.MustUploadSubmission, input.Province, input.City, input.District, input.FullAddress, input.Latitude, input.Longitude)
 	pricings := make([]entity.Pricing, 0)
 	for _, p := range input.Pricings {
 		data := entity.Pricing{
-			PricingId:        uuid.New(),
+			PricingId: uuid.New(),
 			EventID:   event.ID,
 			Name:      p.Name,
 			Quota:     p.Quota,
@@ -48,14 +47,56 @@ func (h *EventHandler) CreateNewEvent(c echo.Context) error {
 		}
 		pricings = append(pricings, data)
 	}
-	
 
-
-	respData, err := h.eventService.CreateEvent(event, pricings);
+	respData, err := h.eventService.CreateEvent(event, pricings)
 
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, response.ErrorResponse(http.StatusInternalServerError, err.Error()))
 	}
 
 	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "sukses membuat event", respData))
+}
+
+func (h *EventHandler) FindEventByID(c echo.Context) error {
+	var input binder.EventFindById
+
+	if err := c.Bind(&input); err != nil {
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, "Input Invalid"))
+	}
+
+	if errorMessage, data := checkValidation(input); errorMessage != "" {
+		return c.JSON(http.StatusBadRequest, response.SuccessResponse(http.StatusBadRequest, errorMessage, data))
+	}
+
+	id := uuid.MustParse(input.ID)
+
+	event, err := h.eventService.FindEventByID(id)
+
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, err.Error()))
+	}
+
+	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "Sukses menampilkan data event", event))
+}
+
+func (h *EventHandler) FindPricingByEventID(c echo.Context) error {
+	var input binder.EventFindById
+
+	if err := c.Bind(&input); err != nil {
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, "Input Invalid"))
+	}
+
+	if errorMessage, data := checkValidation(input); errorMessage != "" {
+		return c.JSON(http.StatusBadRequest, response.SuccessResponse(http.StatusBadRequest, errorMessage, data))
+	}
+
+	id := uuid.MustParse(input.ID)
+
+	price, err := h.eventService.FindPricingByEventID(id)
+
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, err.Error()))
+	}
+
+	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "Sukses menampilkan data event", price))
 }
