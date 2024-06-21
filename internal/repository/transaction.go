@@ -17,6 +17,10 @@ type TransactionRepository interface {
 	GetPricingByEventID(eventID uuid.UUID, pricingID uuid.UUID) (*entity.Pricing, error)
 	GetUsersById(id uuid.UUID) (*entity.User, error)
 	GetEventByID(id uuid.UUID) (*entity.Events, error)
+	FindTransactionsByUserId(userID uuid.UUID) ([]entity.Transaction, error)
+	FindTicketByTransactionID(transactionID uuid.UUID) ([]entity.Ticket, error)
+	GetPricingById(pricingID uuid.UUID) (*entity.Pricing, error)
+	UpdatePricingRemaining(pricingId uuid.UUID, remaining int) (*entity.Pricing, error)
 }
 
 type transactionRepository struct {
@@ -109,4 +113,36 @@ func (r *transactionRepository) GetEventByID(id uuid.UUID) (*entity.Events, erro
 		return nil, err
 	}
 	return &event, nil
+}
+
+func (r *transactionRepository) FindTransactionsByUserId(userID uuid.UUID) ([]entity.Transaction, error) {
+	var transactions []entity.Transaction
+	if err := r.db.Find(&transactions, "user_id = ?", userID).Error; err != nil {
+		return nil, err
+	}
+	return transactions, nil
+}
+
+func (r *transactionRepository) FindTicketByTransactionID(transactionID uuid.UUID) ([]entity.Ticket, error) {
+	var tickets []entity.Ticket
+	if err := r.db.Find(&tickets, "transaction_id = ?", transactionID).Error; err != nil {
+		return nil, err
+	}
+	return tickets, nil
+}
+
+func (r *transactionRepository) GetPricingById(pricingID uuid.UUID) (*entity.Pricing, error) {
+	var pricing entity.Pricing
+	if err := r.db.First(&pricing, "pricing_id = ?", pricingID).Error; err != nil {
+		return nil, err
+	}
+	return &pricing, nil
+}
+
+func (r *transactionRepository) UpdatePricingRemaining(pricingId uuid.UUID, remaining int) (*entity.Pricing, error) {
+	pricing := new(entity.Pricing)
+	if err := r.db.Model(pricing).Where("pricing_id = ?", pricingId).Update("remaining", remaining).Error; err != nil {
+		return nil, err
+	}
+	return pricing, nil
 }

@@ -2,11 +2,14 @@ package service
 
 import (
 	"errors"
+	"fmt"
+	"strings"
 
 	"github.com/Giafn/Depublic/configs"
 	"github.com/Giafn/Depublic/internal/entity"
 	"github.com/Giafn/Depublic/internal/http/binder"
 	"github.com/Giafn/Depublic/internal/repository"
+	"github.com/Giafn/Depublic/pkg/encrypt"
 	"github.com/google/uuid"
 	"github.com/midtrans/midtrans-go"
 	"github.com/midtrans/midtrans-go/snap"
@@ -21,16 +24,27 @@ type TransactionService interface {
 	DeleteTransaction(id uuid.UUID) error
 	CountAmountTickets(tickets []binder.Ticket, eventID uuid.UUID) (int, error)
 	GetUsersById(id uuid.UUID) (*entity.User, error)
+	FindMyTransactions(userID uuid.UUID) ([]entity.Transaction, error)
+	EncryptPaymentURL(paymentURL string, transactionID uuid.UUID) (string, error)
+	DecryptPaymentURL(encryptedPaymentURL string) (string, error)
+	CheckTicketAvailability(transactionID uuid.UUID) (bool, error)
+	UpdateTicketRemaining(tickets []entity.Ticket) error
+	GetTicketsByTransactionID(transactionID uuid.UUID) ([]entity.Ticket, error)
 }
 
 type transactionService struct {
 	transactionRepository repository.TransactionRepository
 	db                    *gorm.DB
+	encryptTool           encrypt.EncryptTool
 	cfg                   *configs.Config
 }
 
-func NewTransactionService(transactionRepository repository.TransactionRepository, db *gorm.DB, cfg *configs.Config) TransactionService {
-	return &transactionService{transactionRepository: transactionRepository, db: db, cfg: cfg}
+func NewTransactionService(transactionRepository repository.TransactionRepository,
+	db *gorm.DB,
+	encryptTool encrypt.EncryptTool,
+	cfg *configs.Config,
+) TransactionService {
+	return &transactionService{transactionRepository: transactionRepository, db: db, encryptTool: encryptTool, cfg: cfg}
 }
 
 func (s *transactionService) CreateTransaction(
@@ -44,11 +58,22 @@ func (s *transactionService) CreateTransaction(
 	}
 	ticketQuantity := len(tickets)
 
+	for _, ticket := range tickets {
+		pricing, err := s.transactionRepository.GetPricingByEventID(eventID, ticket.PricingId)
+		if err != nil {
+			return nil, false, err
+		}
+
+		if pricing.Remaining < 1 {
+			return nil, false, errors.New("ticket not available")
+		}
+	}
+
 	newTransaction := entity.NewTransaction(eventID, userID, ticketQuantity, totalAmount, false)
 
 	entityTickets := []entity.Ticket{}
 	for _, ticket := range tickets {
-		entityTicket := entity.NewTicket("", eventID.String(), ticket.BuyerName)
+		entityTicket := entity.NewTicket("", eventID.String(), ticket.BuyerName, ticket.PricingId.String())
 		entityTickets = append(entityTickets, *entityTicket)
 	}
 	user, err := s.transactionRepository.GetUsersById(userID)
@@ -177,4 +202,82 @@ func (s *transactionService) GetUsersById(id uuid.UUID) (*entity.User, error) {
 		return nil, err
 	}
 	return user, nil
+}
+
+func (s *transactionService) FindMyTransactions(userID uuid.UUID) ([]entity.Transaction, error) {
+	transactions, err := s.transactionRepository.FindTransactionsByUserId(userID)
+	if err != nil {
+		return nil, err
+	}
+	return transactions, nil
+}
+
+func (s *transactionService) EncryptPaymentURL(paymentURL string, transactionID uuid.UUID) (string, error) {
+	explodedPaymentURL := strings.Split(paymentURL, "/")
+
+	paymentId := explodedPaymentURL[len(explodedPaymentURL)-1]
+
+	url := fmt.Sprintf("http://%s:%s/app/api/v1/payment?pay_id=%s&transaction_id=%s", s.cfg.Host, s.cfg.Port, paymentId, transactionID.String())
+	return url, nil
+}
+
+func (s *transactionService) DecryptPaymentURL(paymentId string) (string, error) {
+
+	url := fmt.Sprintf("https://app.sandbox.midtrans.com/snap/v4/redirection/%s", paymentId)
+	return url, nil
+}
+
+func (s *transactionService) CheckTicketAvailability(transactionID uuid.UUID) (bool, error) {
+	transaction, err := s.transactionRepository.FindTransactionByID(transactionID)
+	if err != nil {
+		return false, err
+	}
+
+	if transaction.IsPaid {
+		return false, errors.New("transaction already paid")
+	}
+
+	ticket, err := s.transactionRepository.FindTicketByTransactionID(transactionID)
+	if err != nil {
+		return false, err
+	}
+
+	for _, t := range ticket {
+		pricing, err := s.transactionRepository.GetPricingById(uuid.MustParse(t.PricingID))
+		if err != nil {
+			return false, err
+		}
+
+		if pricing.Remaining < 1 {
+			return false, errors.New("ticket not available")
+		}
+	}
+
+	return true, nil
+}
+
+func (s *transactionService) UpdateTicketRemaining(tickets []entity.Ticket) error {
+	for _, ticket := range tickets {
+		pricing, err := s.transactionRepository.GetPricingById(uuid.MustParse(ticket.PricingID))
+		if err != nil {
+			return err
+		}
+
+		pricing.Remaining -= 1
+
+		_, err = s.transactionRepository.UpdatePricingRemaining(pricing.PricingId, pricing.Remaining)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (s *transactionService) GetTicketsByTransactionID(transactionID uuid.UUID) ([]entity.Ticket, error) {
+	tickets, err := s.transactionRepository.FindTicketByTransactionID(transactionID)
+	if err != nil {
+		return nil, err
+	}
+	return tickets, nil
 }

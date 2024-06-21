@@ -77,6 +77,11 @@ func AppPublicRoutes(Handler handler.AppHandler) []*route.Route {
 			Path:    "/event/pricing/:id",
 			Handler: eventHandler.FindPricingByEventID,
 		},
+		{
+			Method:  http.MethodGet,
+			Path:    "/payment",
+			Handler: transactionHandler.PaymentRedirect,
+		},
 	}
 }
 
@@ -214,6 +219,12 @@ func AppPrivateRoutes(Handler handler.AppHandler) []*route.Route {
 			Path:    "/ticket/:bookingNum",
 			Handler: ticketHandler.DeleteTicketByBookingNumber,
 			Roles:   allRoles,
+		},
+		{
+			Method:  http.MethodGet,
+			Path:    "/mytransactions",
+			Handler: transactionHandler.FindMyTransactions,
+			Roles:   onlyUser,
 		},
 		{
 			Method:  http.MethodPost,

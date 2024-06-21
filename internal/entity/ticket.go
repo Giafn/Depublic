@@ -17,9 +17,10 @@ type Ticket struct {
 	Name          string    `json:"name"`
 	BookingNum    string    `json:"booking_num"`
 	IsUsed        bool      `json:"is_used"`
+	PricingID     string    `json:"pricing_id"`
 }
 
-func NewTicket(idTransaction, idEvent, name string) *Ticket {
+func NewTicket(idTransaction, idEvent, name string, pricingID string) *Ticket {
 	return &Ticket{
 		ID:            uuid.New(),
 		TransactionID: idTransaction,
@@ -27,6 +28,7 @@ func NewTicket(idTransaction, idEvent, name string) *Ticket {
 		Name:          name,
 		BookingNum:    createBookingNumber(idTransaction, idEvent, name),
 		IsUsed:        false,
+		PricingID:     pricingID,
 	}
 }
 
@@ -59,6 +61,7 @@ func UpdateTicket(oldTicket Ticket, name string) *Ticket {
 		Name:          name,
 		BookingNum:    oldTicket.BookingNum,
 		IsUsed:        oldTicket.IsUsed,
+		PricingID:     oldTicket.PricingID,
 	}
 }
 
@@ -70,5 +73,6 @@ func ValidateTicket(oldTicket Ticket) *Ticket {
 		Name:          oldTicket.Name,
 		BookingNum:    oldTicket.BookingNum,
 		IsUsed:        true,
+		PricingID:     oldTicket.PricingID,
 	}
 }

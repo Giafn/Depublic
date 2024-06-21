@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS submissions(
     name VARCHAR(255) NOT NULL,
     filename VARCHAR(255) NOT NULL,
     status varchar(50),
-    type varchar(50) NOT NULL
+    type varchar(50) NOT NULL,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),
     deleted_at TIMESTAMPTZ

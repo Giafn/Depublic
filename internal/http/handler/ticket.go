@@ -51,7 +51,7 @@ func (h *TicketHandler) CreateTicket(c echo.Context) error {
 	for i := 0; i < len(input.Data); i++ {
 
 		fmt.Println(input.Data[i].Name)
-		newTicket := entity.NewTicket(input.IDTransaction, input.IDEvent, input.Data[i].Name)
+		newTicket := entity.NewTicket(input.IDTransaction, input.IDEvent, input.Data[i].Name, "")
 
 		fmt.Println("id trx")
 		fmt.Println(newTicket.TransactionID)
