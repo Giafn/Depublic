@@ -9,6 +9,8 @@ import (
 	"github.com/Giafn/Depublic/internal/repository"
 	"github.com/Giafn/Depublic/internal/service"
 	"github.com/Giafn/Depublic/pkg/response"
+	"github.com/Giafn/Depublic/pkg/token"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 
@@ -236,6 +238,27 @@ func (h *TicketHandler) FindTicketsByTransactionId(c echo.Context) error {
     }
 
 	message := fmt.Sprintf("sukses menampilkan seluruh tiket dengan transaction id %s", param)
+
+	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, message, tickets))
+}
+
+func (h *TicketHandler) FindTicketsByUser(c echo.Context) error {
+	dataUser, _ := c.Get("user").(*jwt.Token)
+	claims := dataUser.Claims.(*token.JwtCustomClaims)
+
+	userID, err := uuid.Parse(claims.ID)
+
+	if err != nil {
+        return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, err.Error()))
+    }
+
+	tickets, err := h.ticketService.FindTicketsByUser(userID)
+
+	if err != nil {
+        return c.JSON(http.StatusInternalServerError, response.ErrorResponse(http.StatusInternalServerError, err.Error()))
+    }
+
+	message := fmt.Sprintf("sukses menampilkan seluruh tiket milik user %s", userID)
 
 	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, message, tickets))
 }
