@@ -74,5 +74,6 @@ func ValidateTicket(oldTicket Ticket) *Ticket {
 		BookingNum: oldTicket.BookingNum,
 		IsUsed: true,
         Auditable:     UpdateAuditable(),
+
 	}
 }

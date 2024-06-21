@@ -13,18 +13,22 @@ type AppHandler struct {
 	FileReader         echo.HandlerFunc
 	UserHandler        UserHandler
 	ProfileHandler     ProfileHandler
+	EventHandler       EventHandler
 	TransactionHandler TransactionHandler
 	TicketHandler      TicketHandler
+	NotificationHandler NotificationHandler
 }
 
-func NewAppHandler(userHandler UserHandler, transactionHandler TransactionHandler, ticketHandler TicketHandler, proprofileHandler ProfileHandler) AppHandler {
+func NewAppHandler(userHandler UserHandler, transactionHandler TransactionHandler, ticketHandler TicketHandler, proprofileHandler ProfileHandler, eventHandler EventHandler, notificationHandler NotificationHandler) AppHandler {
 	return AppHandler{
 		WelcomeHandler:     welcome,
 		FileReader:         fileReader,
 		UserHandler:        userHandler,
+		EventHandler:       eventHandler,
 		TransactionHandler: transactionHandler,
 		TicketHandler:      ticketHandler,
 		ProfileHandler:     proprofileHandler,
+		NotificationHandler: notificationHandler,
 	}
 }
 

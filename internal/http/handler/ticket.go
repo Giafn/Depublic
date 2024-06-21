@@ -18,7 +18,7 @@ import (
 )
 
 type TicketHandler struct {
-	ticketService service.TicketService
+	ticketService      service.TicketService
 	transactionService service.TransactionService
 }
 
@@ -56,7 +56,7 @@ func (h *TicketHandler) CreateTicket(c echo.Context) error {
 		newTicket := entity.NewTicket(input.IDTransaction, input.IDEvent, input.Data[i].Name)
 
 		fmt.Println("id trx")
-		fmt.Println(newTicket.IDTransaction)
+		fmt.Println(newTicket.TransactionID)
 
 		_, err := h.ticketService.CreateTicket(newTicket)
 
@@ -184,14 +184,14 @@ func (h *TicketHandler) DeleteTicketById(c echo.Context) error {
 	id, err := uuid.Parse(idParam)
 
 	if err != nil {
-        return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, err.Error()))
-    }
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, err.Error()))
+	}
 
 	err = h.ticketService.DeleteTicketById(id)
 
 	if err != nil {
-        return c.JSON(http.StatusInternalServerError, response.ErrorResponse(http.StatusInternalServerError, err.Error()))
-    }
+		return c.JSON(http.StatusInternalServerError, response.ErrorResponse(http.StatusInternalServerError, err.Error()))
+	}
 
 	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "tiket berhasil dihapus", nil))
 }
@@ -202,8 +202,8 @@ func (h *TicketHandler) DeleteTicketByBookingNumber(c echo.Context) error {
 	err := h.ticketService.DeleteTicketByBookingNumber(bookingNumber)
 
 	if err != nil {
-        return c.JSON(http.StatusInternalServerError, response.ErrorResponse(http.StatusInternalServerError, err.Error()))
-    }
+		return c.JSON(http.StatusInternalServerError, response.ErrorResponse(http.StatusInternalServerError, err.Error()))
+	}
 
 	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "tiket berhasil dihapus", nil))
 }
@@ -211,8 +211,8 @@ func (h *TicketHandler) DeleteTicketByBookingNumber(c echo.Context) error {
 func (h *TicketHandler) FindAllTickets(c echo.Context) error {
 	tickets, err := h.ticketService.FindAllTickets()
 	if err != nil {
-        return c.JSON(http.StatusInternalServerError, response.ErrorResponse(http.StatusInternalServerError, err.Error()))
-    }
+		return c.JSON(http.StatusInternalServerError, response.ErrorResponse(http.StatusInternalServerError, err.Error()))
+	}
 
 	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "sukses menampilkan seluruh tiket", tickets))
 }

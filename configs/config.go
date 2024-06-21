@@ -16,6 +16,7 @@ type Config struct {
 	Redis    RedisConfig    `envPrefix:"REDIS_"`
 	Encrypt  EncryptConfig  `envPrefix:"ENCRYPT_"`
 	SMTP     SMTPConfig     `envPrefix:"SMTP_"`
+	Midtrans MidtransConfig `envPrefix:"MIDTRANS_"`
 }
 
 type PostgresConfig struct {
@@ -48,6 +49,13 @@ type SMTPConfig struct {
 	User string `env:"USER" envDefault:""`
 	Pass string `env:"PASS" envDefault:""`
 	From string `env:"FROM" envDefault:"depublic@gmail.com"`
+}
+
+type MidtransConfig struct {
+	ClientKey    string `env:"CLIENT_KEY" envDefault:""`
+	ServerKey    string `env:"SERVER_KEY" envDefault:""`
+	IsProduction bool   `env:"IS_PRODUCTION" envDefault:"false"`
+	URL          string `env:"URL" envDefault:"https://api.sandbox.midtrans.com/snap/v1"`
 }
 
 func NewConfig() (*Config, error) {

@@ -12,6 +12,7 @@ import (
 func Validate(input interface{}) map[string]string {
 	validate := validator.New()
 	validate.RegisterValidation("date", dateValidationFunc)
+	validate.RegisterValidation("date_with_time", dateWitTimeValidationFunc)
 
 	err := validate.Struct(input)
 	if err != nil {
@@ -48,6 +49,12 @@ func dateValidationFunc(fl validator.FieldLevel) bool {
 	_, err := time.Parse(layout, date)
 	return err == nil
 }
+func dateWitTimeValidationFunc(fl validator.FieldLevel) bool {
+	date := fl.Field().String()
+	layout := "2006-01-02 15:04:05"
+	_, err := time.Parse(layout, date)
+	return err == nil
+}
 
 func getErrorMessage(err validator.FieldError) string {
 	switch err.Tag() {
@@ -59,6 +66,8 @@ func getErrorMessage(err validator.FieldError) string {
 		return fmt.Sprintf("%s must be at least %s characters", err.Field(), err.Param())
 	case "date":
 		return fmt.Sprintf("%s must be a valid date in the format YYYY-MM-DD", err.Field())
+	case "date_with_time":
+		return fmt.Sprintf("%s must be a valid date with time in the format YYYY-MM-DD HH:MM:SS", err.Field())
 	case "oneof":
 		fields := strings.Split(err.Param(), " ")
 		return fmt.Sprintf("at least one of these fields must be provided: %s", strings.Join(fields, ", "))
