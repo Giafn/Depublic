@@ -12,21 +12,23 @@ import (
 
 type Ticket struct {
 	ID            uuid.UUID `json:"id"`
-	TransactionID string    `json:"transaction_id"`
-	EventID       string    `json:"event_id"`
-	Name          string    `json:"name"`
-	BookingNum    string    `json:"booking_num"`
-	IsUsed        bool      `json:"is_used"`
+	IDTransaction string `json:"idTransaction"`
+	IDEvent       string `json:"idEvent"`
+	Name          string `json:"name"` // nama pemilik tiket
+	BookingNum    string `json:"bookingNum"`
+	IsUsed        bool   `json:"isUsed"`
+	Auditable
 }
 
 func NewTicket(idTransaction, idEvent, name string) *Ticket {
 	return &Ticket{
-		ID:            uuid.New(),
-		TransactionID: idTransaction,
-		EventID:       idEvent,
-		Name:          name,
-		BookingNum:    createBookingNumber(idTransaction, idEvent, name),
-		IsUsed:        false,
+		ID: uuid.New(),
+		IDTransaction: idTransaction,
+		IDEvent: idEvent,
+		Name: name,
+		BookingNum: createBookingNumber(idTransaction, idEvent, name),
+		IsUsed: false,
+        Auditable:     NewAuditable(),
 	}
 }
 
@@ -53,22 +55,25 @@ func createBookingNumber(idTransaction, idEvent, visitorName string) string {
 
 func UpdateTicket(oldTicket Ticket, name string) *Ticket {
 	return &Ticket{
-		ID:            oldTicket.ID,
-		TransactionID: oldTicket.TransactionID,
-		EventID:       oldTicket.EventID,
-		Name:          name,
-		BookingNum:    oldTicket.BookingNum,
-		IsUsed:        oldTicket.IsUsed,
+		ID: oldTicket.ID,
+		IDTransaction: oldTicket.IDTransaction,
+		IDEvent: oldTicket.IDEvent,
+		Name: name,
+		BookingNum: oldTicket.BookingNum,
+		IsUsed: oldTicket.IsUsed,
+        Auditable:     UpdateAuditable(),
 	}
 }
 
 func ValidateTicket(oldTicket Ticket) *Ticket {
 	return &Ticket{
-		ID:            oldTicket.ID,
-		TransactionID: oldTicket.TransactionID,
-		EventID:       oldTicket.EventID,
-		Name:          oldTicket.Name,
-		BookingNum:    oldTicket.BookingNum,
-		IsUsed:        true,
+		ID: oldTicket.ID,
+		IDTransaction: oldTicket.IDTransaction,
+		IDEvent: oldTicket.IDEvent,
+		Name: oldTicket.Name,
+		BookingNum: oldTicket.BookingNum,
+		IsUsed: true,
+        Auditable:     UpdateAuditable(),
+
 	}
 }

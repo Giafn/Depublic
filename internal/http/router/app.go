@@ -18,6 +18,7 @@ var (
 	onlyAdmin           = []string{Admin}
 	onlyUser            = []string{User}
 	onlyPetugasLapangan = []string{PetugasLapangan}
+	excludeUser = []string{Admin, PetugasLapangan}
 )
 
 func AppPublicRoutes(Handler handler.AppHandler) []*route.Route {
@@ -177,29 +178,35 @@ func AppPrivateRoutes(Handler handler.AppHandler) []*route.Route {
 			Method:  http.MethodGet,
 			Path:    "/ticket",
 			Handler: ticketHandler.FindAllTickets,
+			Roles:   onlyAdmin,
+		},
+		{
+			Method:  http.MethodGet,
+			Path:    "/ticket/user",
+			Handler: ticketHandler.FindTicketsByUser,
 			Roles:   allRoles,
 		},
 		{
 			Method:  http.MethodGet,
 			Path:    "/ticket/:id",
 			Handler: ticketHandler.FindTicketByID,
-			Roles:   allRoles,
+			Roles:   onlyAdmin,
 		},
 		{
 			Method:  http.MethodGet,
-			Path:    "/ticket/:bookingNum",
+			Path:    "/ticket/booking/:bookingNum",
 			Handler: ticketHandler.FindTicketByBookingNumber,
-			Roles:   allRoles,
+			Roles:   excludeUser,
 		},
 		{
 			Method:  http.MethodPost,
 			Path:    "/ticket/:id",
 			Handler: ticketHandler.UpdateTicket,
-			Roles:   allRoles,
+			Roles:   onlyAdmin,
 		},
 		{
 			Method:  http.MethodPost,
-			Path:    "/ticket/:id/validate",
+			Path:    "/ticket/validate/:id",
 			Handler: ticketHandler.ValidateTicket,
 			Roles:   onlyPetugasLapangan,
 		},
@@ -207,13 +214,19 @@ func AppPrivateRoutes(Handler handler.AppHandler) []*route.Route {
 			Method:  http.MethodDelete,
 			Path:    "/ticket/:id",
 			Handler: ticketHandler.DeleteTicketById,
+			Roles:   onlyAdmin,
+		},
+		{
+			Method:  http.MethodGet,
+			Path:    "/ticket/transaction/:transactionId",
+			Handler: ticketHandler.FindTicketsByTransactionId,
 			Roles:   allRoles,
 		},
 		{
 			Method:  http.MethodDelete,
-			Path:    "/ticket/:bookingNum",
+			Path:    "/ticket/booking/:bookingNum",
 			Handler: ticketHandler.DeleteTicketByBookingNumber,
-			Roles:   allRoles,
+			Roles:   onlyAdmin,
 		},
 		{
 			Method:  http.MethodPost,

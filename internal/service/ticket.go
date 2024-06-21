@@ -15,6 +15,8 @@ type TicketService interface {
 	DeleteTicketById(id uuid.UUID) error
 	DeleteTicketByBookingNumber(bookingNumber string) error
 	FindAllTickets() ([]entity.Ticket, error)
+	FindTicketsByTransactionId(transactionId uuid.UUID) ([]entity.Ticket, error)
+	FindTicketsByUser(userId uuid.UUID) ([]entity.Ticket, error)
 }
 
 type ticketService struct {
@@ -70,6 +72,22 @@ func (s *ticketService) DeleteTicketByBookingNumber(bookingNumber string) error 
 
 func (s *ticketService) FindAllTickets() ([]entity.Ticket, error) {
 	tickets, err := s.ticketRepository.FindAllTickets()
+	if err != nil {
+		return nil, err
+	}
+	return tickets, nil
+}
+
+func (s *ticketService) FindTicketsByTransactionId(transactionId uuid.UUID) ([]entity.Ticket, error) {
+	tickets, err := s.ticketRepository.FindTicketsByTransactionId(transactionId)
+	if err != nil {
+		return nil, err
+	}
+	return tickets, nil
+}
+
+func (s *ticketService) FindTicketsByUser(userId uuid.UUID) ([]entity.Ticket, error) {
+	tickets, err := s.ticketRepository.FindTicketsByUser(userId)
 	if err != nil {
 		return nil, err
 	}
