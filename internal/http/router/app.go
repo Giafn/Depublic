@@ -86,6 +86,7 @@ func AppPrivateRoutes(Handler handler.AppHandler) []*route.Route {
 	transactionHandler := Handler.TransactionHandler
 	eventHandler := Handler.EventHandler
 	ticketHandler := Handler.TicketHandler
+	submissionHandler := Handler.SubmissionHandler
 
 	return []*route.Route{
 		{
@@ -242,6 +243,13 @@ func AppPrivateRoutes(Handler handler.AppHandler) []*route.Route {
 			Method:  http.MethodDelete,
 			Path:    "/transactions/:id",
 			Handler: transactionHandler.DeleteTransaction,
+			Roles:   allRoles,
+		},
+		// submission
+		{
+			Method:  http.MethodPost,
+			Path:    "/submission",
+			Handler: submissionHandler.CreateSubmission,
 			Roles:   allRoles,
 		},
 	}
