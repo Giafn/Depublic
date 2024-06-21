@@ -1,7 +1,9 @@
 package handler
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/Giafn/Depublic/internal/entity"
@@ -46,7 +48,7 @@ func (h *TransactionHandler) CreateTransaction(c echo.Context) error {
 
 	res := map[string]string{
 		"total_amount":           fmt.Sprintf("%d", transaction.TotalAmount),
-		"must_upload_submission": "true",
+		"must_upload_submission": "false",
 		"payment_url":            "",
 		"transaction_id":         transaction.ID.String(),
 	}
@@ -130,3 +132,45 @@ func (h *TransactionHandler) DeleteTransaction(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "Transaction deleted successfully", nil))
 }
+
+func (h *TransactionHandler) WebhookPayment(c echo.Context) error {
+	fmt.Println("Received webhook payload")
+
+	body, err := io.ReadAll(c.Request().Body)
+	if err != nil {
+		fmt.Println("Error reading request body:", err)
+		return c.String(http.StatusInternalServerError, "Internal Server Error")
+	}
+
+	request := &binder.MidtransWebhookRequest{}
+	err = json.Unmarshal(body, request)
+	if err != nil {
+		fmt.Println("Error unmarshalling JSON:", err)
+		return c.String(http.StatusBadRequest, "Bad Request")
+	}
+	transID, _ := uuid.Parse(request.OrderID)
+
+	transactionStatus := request.TransactionStatus
+	if transactionStatus != "settlement" && transactionStatus != "capture" {
+		fmt.Println("Transaction status not accepted")
+		return c.String(http.StatusOK, "Webhook received successfully")
+	}
+
+	transaction, err := h.transactionService.FindTransactionByID(transID)
+	if err != nil {
+		fmt.Println("Error finding transaction:", err)
+		return c.String(http.StatusInternalServerError, "Internal Server Error")
+	}
+
+	transaction.IsPaid = true
+	_, err = h.transactionService.UpdateTransaction(transaction)
+
+	if err != nil {
+		fmt.Println("Error updating transaction:", err)
+		return c.String(http.StatusInternalServerError, "Internal Server Error")
+	}
+
+	return c.String(http.StatusOK, "Webhook received successfully")
+}
+
+// table

@@ -23,6 +23,7 @@ var (
 func AppPublicRoutes(Handler handler.AppHandler) []*route.Route {
 	welcome := Handler.WelcomeHandler
 	userHandler := Handler.UserHandler
+	transactionHandler := Handler.TransactionHandler
 
 	return []*route.Route{
 		{
@@ -54,6 +55,11 @@ func AppPublicRoutes(Handler handler.AppHandler) []*route.Route {
 			Method:  http.MethodPost,
 			Path:    "/account/resend-email-verification",
 			Handler: userHandler.ResendEmailVerification,
+		},
+		{
+			Method:  http.MethodPost,
+			Path:    "/transaction/webhook",
+			Handler: transactionHandler.WebhookPayment,
 		},
 	}
 }
