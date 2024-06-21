@@ -127,7 +127,7 @@ func (h *EventHandler) GetEvents(c echo.Context) error {
 	allowedParams := map[string]bool{
 		"price":    true,
 		"province": true,
-		"timeStart":     true,
+		"timeStart": true,
 		"category": true,
 		"sort":     true,
 	}
@@ -197,7 +197,26 @@ func (h *EventHandler) GetEvents(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, "Nilai Parameter sort tidak dikenali"))
 	}
 
-	events, err := h.eventService.GetEvents(filter, sort)
+	var distance map[string]float64
+
+	if sort == "terdekat" {
+		var input binder.DistanceRequest
+
+		if err := c.Bind(&input); err != nil {
+			return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, "Kesalahan Input"))
+		}
+	
+		if errorMessage, data := checkValidation(input); errorMessage != "" {
+			return c.JSON(http.StatusBadRequest, response.SuccessResponse(http.StatusBadRequest, errorMessage, data))
+		}
+
+		distance = map[string]float64 {
+			"latitude" : input.Latitude,
+			"longitude" : input.Longitude,
+		}
+	}
+
+	events, err := h.eventService.GetEvents(filter, sort, distance)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, response.ErrorResponse(http.StatusInternalServerError, err.Error()))
 	}
@@ -208,6 +227,7 @@ func (h *EventHandler) GetEvents(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "Berhasil Menampilkan Events",events))
 }
+
 
 func (h *EventHandler) UpdateEventWithPricing(c echo.Context) error {
     var input binder.EventUpdateRequest

@@ -1,6 +1,8 @@
 package service
 
 import (
+	"errors"
+
 	"github.com/Giafn/Depublic/internal/entity"
 	"github.com/Giafn/Depublic/internal/repository"
 	"github.com/google/uuid"
@@ -11,7 +13,7 @@ type EventService interface {
 	CreatePricing(pricing *entity.Pricing) (*entity.Pricing, error)
 	FindEventByID(id uuid.UUID) (*entity.Event, error)
 	FindPricingByEventID(id uuid.UUID) ([]entity.Pricing, error)
-    GetEvents(filters map[string]interface{}, sort string) ([]entity.Event,error)
+	GetEvents(filters map[string]interface{}, sort string, distance map[string]float64) ([]entity.Event, error)
 	UpdateEventWithPricing(event *entity.Event, pricings []entity.Pricing) (*entity.Event, error)
 	UpdateEvent(event *entity.Event) (*entity.Event, error)
 	UpdatePricing(pricing *entity.Pricing) (*entity.Pricing, error)
@@ -30,7 +32,7 @@ func NewEventService(eventRepo repository.EventRepository) EventService {
 func (s *eventService) CreateEvent(event *entity.Event, pricings []entity.Pricing) (*entity.Event, error) {
 	return s.eventRepository.CreateEvent(event, pricings)
 }
-func (s *eventService) CreatePricing(pricing *entity.Pricing)  (*entity.Pricing, error) {
+func (s *eventService) CreatePricing(pricing *entity.Pricing) (*entity.Pricing, error) {
 	return s.eventRepository.CreatePricing(pricing)
 }
 
@@ -50,12 +52,15 @@ func (s *eventService) FindPricingByEventID(id uuid.UUID) ([]entity.Pricing, err
 	return event, nil
 }
 
-func (s *eventService) GetEvents(filters map[string]interface{}, sort string) ([]entity.Event,error){
-    events, err := s.eventRepository.GetEvents(filters,sort)
-    if err != nil {
-        return nil, err
-    }
-    return events, nil
+func (s *eventService) GetEvents(filters map[string]interface{}, sort string, distance map[string]float64) ([]entity.Event, error) {
+	if sort == "terdekat" && distance == nil {
+		return nil, errors.New("latitude dan longitude diperlukan untuk sort terdekat")
+	}
+	events, err := s.eventRepository.GetEvents(filters, sort, distance)
+	if err != nil {
+		return nil, err
+	}
+	return events, nil
 }
 func (s *eventService) UpdateEventWithPricing(event *entity.Event, pricings []entity.Pricing) (*entity.Event, error) {
 	return s.eventRepository.UpdateEventWithPricing(event, pricings)
@@ -76,7 +81,6 @@ func (s *eventService) DeleteEvent(eventID uuid.UUID) (bool, error) {
 		return false, err
 	}
 
-
 	return s.eventRepository.DeleteEvent(event)
 }
 
@@ -86,7 +90,6 @@ func (s *eventService) DeletePricing(pricingID uuid.UUID) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-
 
 	return s.eventRepository.DeletePricing(pricing)
 }

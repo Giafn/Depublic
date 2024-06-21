@@ -46,6 +46,11 @@ type PricingFindById struct {
 	ID string `param:"id" validate:"required"`
 }
 
+type DistanceRequest struct {
+	Latitude float64 `json:"latitude" validate:"required"`
+	Longitude float64 `json:"longitude" validate:"required"`
+}
+
 type EventUpdateRequest struct {
 	ID                   string                 `param:"id" validate:"required"`
 	Name                 string                 `json:"name"`
