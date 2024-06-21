@@ -3,8 +3,8 @@ package binder
 import "github.com/Giafn/Depublic/internal/entity"
 
 type TicketCreateRequest struct {
-	IDEvent       string `json:"idEvent" validate:"required"`
-	IDTransaction string `json:"idTransaction" validate:"required"`
+	EventID       string `json:"event_id" validate:"required"`
+	TransactionID string `json:"transaction_id" validate:"required"`
 	Data          []entity.Person `json:"data" validate:"required"`
 }
 

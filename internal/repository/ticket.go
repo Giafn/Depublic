@@ -142,7 +142,7 @@ func (r *ticketRepository) FindTicketsByTransactionId(transactionId uuid.UUID) (
 
 func (r *ticketRepository) FindTicketsByUser(userId uuid.UUID) ([]entity.Ticket, error) {
 	var tickets []entity.Ticket
-    result := r.db.Joins("JOIN transactions ON transactions.id = tickets.id_transaction").
+    result := r.db.Joins("JOIN transactions ON transactions.id = tickets.transaction_id").
         Where("transactions.user_id = ?", userId).Find(&tickets)
     if result.Error != nil {
         return nil, result.Error
