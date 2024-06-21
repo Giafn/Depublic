@@ -56,6 +56,7 @@ func (s *eventService) GetEvents(filters map[string]interface{}, sort string) ([
         return nil, err
     }
     return events, nil
+}
 func (s *eventService) UpdateEventWithPricing(event *entity.Event, pricings []entity.Pricing) (*entity.Event, error) {
 	return s.eventRepository.UpdateEventWithPricing(event, pricings)
 }
