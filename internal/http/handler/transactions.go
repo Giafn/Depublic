@@ -44,11 +44,19 @@ func (h *TransactionHandler) CreateTransaction(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, response.ErrorResponse(http.StatusInternalServerError, err.Error()))
 	}
 
-	if mustUpload {
-		return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "Transaction created successfully, harap upload pengajuan", nil))
+	res := map[string]string{
+		"must_upload_submission": "true",
+		"payment_url":            "",
 	}
 
-	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "Transaction created successfully", []string{transaction.PaymentURL}))
+	if mustUpload {
+		return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "Transaction created successfully, please upload your submission", res))
+	}
+
+	res["must_upload_submission"] = "false"
+	res["payment_url"] = transaction.PaymentURL
+
+	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "Transaction created successfully", res))
 }
 
 func (h *TransactionHandler) FindTransactionByID(c echo.Context) error {
