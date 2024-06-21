@@ -43,7 +43,7 @@ func NewEvent(name, organizer, description string, startTime, endTime time.Time,
 	}
 }
 
-func UpdateEvent(id uuid.UUID, name, organizer string, startTime, endTime time.Time, mustUploadSubmission bool, province, city, district, fullAddress string, latitude, longitude float64, pricings []Pricing) *Event {
+func UpdateEvent(id uuid.UUID, name,  description, organizer string, startTime, endTime time.Time, mustUploadSubmission bool, province, city, district, fullAddress string, latitude, longitude float64) *Event {
 	return &Event{
 		ID:                   id,
 		Name:                 name,
@@ -57,7 +57,6 @@ func UpdateEvent(id uuid.UUID, name, organizer string, startTime, endTime time.T
 		FullAddress:          fullAddress,
 		Latitude:             latitude,
 		Longitude:            longitude,
-		Pricings:             pricings,
 		Auditable:            UpdateAuditable(),
 	}
 }

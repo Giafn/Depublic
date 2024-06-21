@@ -132,6 +132,30 @@ func AppPrivateRoutes(Handler handler.AppHandler) []*route.Route {
 			Roles: onlyAdmin,
 		},
 		{
+			Method:  http.MethodPatch,
+			Path:    "/event/:id",
+			Handler: eventHandler.UpdateEventWithPricing,
+			Roles: onlyAdmin,
+		},
+		{
+			Method:  http.MethodDelete,
+			Path:    "/event/:id",
+			Handler: eventHandler.DeleteEvent,
+			Roles: onlyAdmin,
+		},
+		{
+			Method:  http.MethodDelete,
+			Path:    "/event/pricing/:id",
+			Handler: eventHandler.DeletePricing,
+			Roles: onlyAdmin,
+		},
+		{
+			Method:  http.MethodPost,
+			Path:    "/event/pricing",
+			Handler: eventHandler.CreatePricing,
+			Roles: onlyAdmin,
+		},
+		{
 			Method:  http.MethodPost,
 			Path:    "/ticket/create",
 			Handler: ticketHandler.CreateTicket,
