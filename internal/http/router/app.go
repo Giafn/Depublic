@@ -23,6 +23,7 @@ var (
 func AppPublicRoutes(Handler handler.AppHandler) []*route.Route {
 	welcome := Handler.WelcomeHandler
 	userHandler := Handler.UserHandler
+	transactionHandler := Handler.TransactionHandler
 	eventHandler := Handler.EventHandler
 
 	return []*route.Route{
@@ -57,18 +58,23 @@ func AppPublicRoutes(Handler handler.AppHandler) []*route.Route {
 			Handler: userHandler.ResendEmailVerification,
 		},
 		{
-			Method: http.MethodGet,
-			Path: "/event",
+			Method:  http.MethodPost,
+			Path:    "/transaction/webhook",
+			Handler: transactionHandler.WebhookPayment,
+		},
+		{
+			Method:  http.MethodGet,
+			Path:    "/event",
 			Handler: eventHandler.GetEvents,
 		},
 		{
-			Method: http.MethodGet,
-			Path: "/event/:id",
+			Method:  http.MethodGet,
+			Path:    "/event/:id",
 			Handler: eventHandler.FindEventByID,
 		},
 		{
-			Method: http.MethodGet,
-			Path: "/event/pricing/:id",
+			Method:  http.MethodGet,
+			Path:    "/event/pricing/:id",
 			Handler: eventHandler.FindPricingByEventID,
 		},
 	}
@@ -134,31 +140,31 @@ func AppPrivateRoutes(Handler handler.AppHandler) []*route.Route {
 			Method:  http.MethodPost,
 			Path:    "/event",
 			Handler: eventHandler.CreateNewEvent,
-			Roles: onlyAdmin,
+			Roles:   onlyAdmin,
 		},
 		{
 			Method:  http.MethodPatch,
 			Path:    "/event/:id",
 			Handler: eventHandler.UpdateEventWithPricing,
-			Roles: onlyAdmin,
+			Roles:   onlyAdmin,
 		},
 		{
 			Method:  http.MethodDelete,
 			Path:    "/event/:id",
 			Handler: eventHandler.DeleteEvent,
-			Roles: onlyAdmin,
+			Roles:   onlyAdmin,
 		},
 		{
 			Method:  http.MethodDelete,
 			Path:    "/event/pricing/:id",
 			Handler: eventHandler.DeletePricing,
-			Roles: onlyAdmin,
+			Roles:   onlyAdmin,
 		},
 		{
 			Method:  http.MethodPost,
 			Path:    "/event/pricing",
 			Handler: eventHandler.CreatePricing,
-			Roles: onlyAdmin,
+			Roles:   onlyAdmin,
 		},
 		{
 			Method:  http.MethodPost,
