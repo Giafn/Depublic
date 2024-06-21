@@ -159,14 +159,14 @@ func (h *TicketHandler) ValidateTicket(c echo.Context) error {
 	id := uuid.MustParse(input.ID)
 
 	oldTicket, err := h.ticketService.FindTicketByID(id)
+	fmt.Println("old ticket")
+	fmt.Println(oldTicket.IsUsed) //false
 
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 
-	requestedTicket := entity.ValidateTicket(*oldTicket)
-
-	validatedTicket, err := h.ticketService.ValidateTicket(requestedTicket)
+	validatedTicket, err := h.ticketService.ValidateTicket(oldTicket)
 
 	if err != nil {
 		fmt.Println(err)
@@ -175,13 +175,6 @@ func (h *TicketHandler) ValidateTicket(c echo.Context) error {
 		}
 		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, err.Error()))
 	}
-
-	// fmt.Println("3")
-	// fmt.Println(validatedTicket.IsUsed)
-
-	// if err != nil {
-	// 	return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, err.Error()))
-	// }
 
 	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "sukses memvalidasi tiket", validatedTicket))
 }

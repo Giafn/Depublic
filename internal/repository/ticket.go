@@ -2,6 +2,7 @@ package repository
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/Giafn/Depublic/internal/entity"
 	"github.com/google/uuid"
@@ -65,13 +66,15 @@ func (r *ticketRepository) UpdateTicket(ticket *entity.Ticket) (*entity.Ticket, 
 var ErrTicketAlreadyValidated = errors.New("ticket is already validated")
 
 func (r *ticketRepository) ValidateTicket(ticket *entity.Ticket) (*entity.Ticket, error) {
+	fmt.Println("repository")
+	fmt.Println(ticket.IsUsed)
 	if ticket.IsUsed {
 		return ticket, ErrTicketAlreadyValidated
 	}
 	
 	fields := make(map[string]interface{})
 
-	fields["is_used"] = ticket.IsUsed
+	fields["is_used"] = true
 
 	if err := r.db.Model(ticket).Where("id = ?", ticket.ID).Updates(fields).Error; err != nil {
 		return ticket, nil
