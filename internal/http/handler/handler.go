@@ -16,9 +16,10 @@ type AppHandler struct {
 	EventHandler       EventHandler
 	TransactionHandler TransactionHandler
 	TicketHandler      TicketHandler
+	NotificationHandler NotificationHandler
 }
 
-func NewAppHandler(userHandler UserHandler, transactionHandler TransactionHandler, ticketHandler TicketHandler, proprofileHandler ProfileHandler, eventHandler EventHandler) AppHandler {
+func NewAppHandler(userHandler UserHandler, transactionHandler TransactionHandler, ticketHandler TicketHandler, proprofileHandler ProfileHandler, eventHandler EventHandler, notificationHandler NotificationHandler) AppHandler {
 	return AppHandler{
 		WelcomeHandler:     welcome,
 		FileReader:         fileReader,
@@ -27,6 +28,7 @@ func NewAppHandler(userHandler UserHandler, transactionHandler TransactionHandle
 		TransactionHandler: transactionHandler,
 		TicketHandler:      ticketHandler,
 		ProfileHandler:     proprofileHandler,
+		NotificationHandler: notificationHandler,
 	}
 }
 

@@ -86,6 +86,7 @@ func AppPrivateRoutes(Handler handler.AppHandler) []*route.Route {
 	transactionHandler := Handler.TransactionHandler
 	eventHandler := Handler.EventHandler
 	ticketHandler := Handler.TicketHandler
+	notificationHandler := Handler.NotificationHandler
 
 	return []*route.Route{
 		{
@@ -244,5 +245,36 @@ func AppPrivateRoutes(Handler handler.AppHandler) []*route.Route {
 			Handler: transactionHandler.DeleteTransaction,
 			Roles:   allRoles,
 		},
+		{
+			Method:  http.MethodGet,
+			Path:    "/notifications",
+			Handler: notificationHandler.FindAllNotification,
+			Roles:  allRoles,
+		},
+		{
+			Method:  http.MethodGet,
+			Path:    "/notifications/:id",
+			Handler: notificationHandler.FindNotificationByID,
+			Roles:   allRoles,
+		},
+		{
+			Method:  http.MethodPatch,
+			Path:    "/notifications",
+			Handler: notificationHandler.UpdateSeenNotifications,
+			Roles:  allRoles,
+		},
+		{
+			Method:  http.MethodDelete,
+			Path:    "/notifications",
+			Handler: notificationHandler.DeleteSeenNotifications,
+			Roles:  allRoles,
+		},
+		{
+			Method:  http.MethodDelete,
+			Path:    "/notifications/:id",
+			Handler: notificationHandler.DeleteNotificationByID,
+			Roles:  allRoles,
+		},
+		
 	}
 }
