@@ -93,11 +93,13 @@ func (r *transactionRepository) GetPricingByEventID(eventID uuid.UUID, pricingID
 }
 
 func (r *transactionRepository) GetUsersById(id uuid.UUID) (*entity.User, error) {
-	var user entity.User
-	if err := r.db.First(&user, "user_id = ?", id).Error; err != nil {
+	user := new(entity.User)
+	if err := r.db.Preload("Profiles").
+		First(&user, "user_id = ?", id).
+		Error; err != nil {
 		return nil, err
 	}
-	return &user, nil
+	return user, nil
 }
 
 // GetEventByID

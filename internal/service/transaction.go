@@ -142,9 +142,9 @@ func (s *transactionService) RequestPayment(transaction *entity.Transaction, use
 			Secure: true,
 		},
 		CustomerDetail: &midtrans.CustomerDetails{
-			FName: "Tukimin",
-			LName: "Pergi Ke pasar",
-			Email: "felixajax@weeboo.com",
+			FName: user.Profiles.FullName,
+			LName: "(customer depublic)",
+			Email: user.Email,
 		},
 	}
 

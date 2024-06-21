@@ -45,15 +45,19 @@ func (h *TransactionHandler) CreateTransaction(c echo.Context) error {
 	}
 
 	res := map[string]string{
+		"total_amount":           fmt.Sprintf("%d", transaction.TotalAmount),
 		"must_upload_submission": "true",
 		"payment_url":            "",
+		"transaction_id":         transaction.ID.String(),
 	}
 
 	if mustUpload {
-		return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "Transaction created successfully, please upload your submission", res))
+		return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "Transaction created successfully, please upload your submission", map[string]string{
+			"must_upload_submission": "true",
+			"transaction_id":         transaction.ID.String(),
+		}))
 	}
 
-	res["must_upload_submission"] = "false"
 	res["payment_url"] = transaction.PaymentURL
 
 	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "Transaction created successfully", res))
