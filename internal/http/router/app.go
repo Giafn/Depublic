@@ -157,6 +157,12 @@ func AppPrivateRoutes(Handler handler.AppHandler) []*route.Route {
 			Roles:   onlyAdmin,
 		},
 		{
+			Method:  http.MethodGet,
+			Path:    "/ticket/transaction/:transactionId",
+			Handler: ticketHandler.FindTicketsByTransactionId,
+			Roles:   allRoles,
+		},
+		{
 			Method:  http.MethodDelete,
 			Path:    "/ticket/booking/:bookingNum",
 			Handler: ticketHandler.DeleteTicketByBookingNumber,

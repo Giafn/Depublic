@@ -212,6 +212,7 @@ func (h *TicketHandler) DeleteTicketByBookingNumber(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "tiket berhasil dihapus", nil))
 }
+
 func (h *TicketHandler) FindAllTickets(c echo.Context) error {
 	tickets, err := h.ticketService.FindAllTickets()
 	if err != nil {
@@ -219,4 +220,22 @@ func (h *TicketHandler) FindAllTickets(c echo.Context) error {
     }
 
 	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "sukses menampilkan seluruh tiket", tickets))
+}
+
+func (h *TicketHandler) FindTicketsByTransactionId(c echo.Context) error {
+	param := c.Param("transactionId")
+	transactionId, err := uuid.Parse(param)
+
+	if err != nil {
+        return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, err.Error()))
+    }
+
+	tickets, err := h.ticketService.FindTicketsByTransactionId(transactionId)
+	if err != nil {
+        return c.JSON(http.StatusInternalServerError, response.ErrorResponse(http.StatusInternalServerError, err.Error()))
+    }
+
+	message := fmt.Sprintf("sukses menampilkan seluruh tiket dengan transaction id %s", param)
+
+	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, message, tickets))
 }
