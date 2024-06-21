@@ -17,10 +17,11 @@ import (
 
 type TicketHandler struct {
 	ticketService service.TicketService
+	transactionService service.TransactionService
 }
 
-func NewTicketHandler(ticketService service.TicketService) TicketHandler {
-	return TicketHandler{ticketService: ticketService}
+func NewTicketHandler(ticketService service.TicketService, transactionService service.TransactionService) TicketHandler {
+	return TicketHandler{ticketService: ticketService, transactionService: transactionService}
 }
 
 func (h *TicketHandler) CreateTicket(c echo.Context) error {
@@ -34,7 +35,18 @@ func (h *TicketHandler) CreateTicket(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, response.SuccessResponse(http.StatusBadRequest, errorMessage, data))
 	}
 
-	fmt.Println(input.Data)
+	idTransaction, err := uuid.Parse(input.IDTransaction)
+	fmt.Println(idTransaction)
+
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, err.Error()))
+	}
+
+	_, err = h.transactionService.FindTransactionByID(idTransaction)
+
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, err.Error()))
+	}
 
 	for i := 0; i < len(input.Data); i++ {
 
@@ -72,9 +84,33 @@ func (h *TicketHandler) FindTicketByID(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, response.SuccessResponse(http.StatusBadRequest, errorMessage, data))
 	}
 
-	id := uuid.MustParse(input.ID)
+	id, err := uuid.Parse(input.ID)
+
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, err.Error()))
+	}
 
 	ticket, err := h.ticketService.FindTicketByID(id)
+
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, err.Error()))
+	}
+
+	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "sukses menampilkan data tiket", ticket))
+}
+
+func (h *TicketHandler) FindTicketByBookingNumber(c echo.Context) error {
+	input := binder.TicketFindByBookingNumberRequest{}
+
+	if err := c.Bind(&input); err != nil {
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, "ada kesalahan input"))
+	}
+
+	if errorMessage, data := checkValidation(input); errorMessage != "" {
+		return c.JSON(http.StatusBadRequest, response.SuccessResponse(http.StatusBadRequest, errorMessage, data))
+	}
+
+	ticket, err := h.ticketService.FindTicketByBookingNumber(input.BookingNumber)
 
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, err.Error()))
@@ -152,4 +188,41 @@ func (h *TicketHandler) ValidateTicket(c echo.Context) error {
 	// }
 
 	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "sukses memvalidasi tiket", validatedTicket))
+}
+
+func (h *TicketHandler) DeleteTicketById(c echo.Context) error {
+	idParam := c.Param("id")
+	id, err := uuid.Parse(idParam)
+
+	if err != nil {
+        return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, err.Error()))
+    }
+
+	err = h.ticketService.DeleteTicketById(id)
+
+	if err != nil {
+        return c.JSON(http.StatusInternalServerError, response.ErrorResponse(http.StatusInternalServerError, err.Error()))
+    }
+
+	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "tiket berhasil dihapus", nil))
+}
+
+func (h *TicketHandler) DeleteTicketByBookingNumber(c echo.Context) error {
+	bookingNumber := c.Param("bookingNum")
+
+	err := h.ticketService.DeleteTicketByBookingNumber(bookingNumber)
+
+	if err != nil {
+        return c.JSON(http.StatusInternalServerError, response.ErrorResponse(http.StatusInternalServerError, err.Error()))
+    }
+
+	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "tiket berhasil dihapus", nil))
+}
+func (h *TicketHandler) FindAllTickets(c echo.Context) error {
+	tickets, err := h.ticketService.FindAllTickets()
+	if err != nil {
+        return c.JSON(http.StatusInternalServerError, response.ErrorResponse(http.StatusInternalServerError, err.Error()))
+    }
+
+	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "sukses menampilkan seluruh tiket", tickets))
 }

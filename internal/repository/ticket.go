@@ -13,6 +13,10 @@ type TicketRepository interface {
 	FindTicketByID(id uuid.UUID) (*entity.Ticket, error)
 	UpdateTicket(ticket *entity.Ticket) (*entity.Ticket, error)
 	ValidateTicket(ticket *entity.Ticket) (*entity.Ticket, error)
+	FindTicketByBookingNumber(bookingNumber string) (*entity.Ticket, error)
+	DeleteTicketById(id uuid.UUID) error
+	DeleteTicketByBookingNumber(bookingNumber string) error
+	FindAllTickets() ([]entity.Ticket, error)
 }
 	
 type ticketRepository struct {
@@ -72,4 +76,52 @@ func (r *ticketRepository) ValidateTicket(ticket *entity.Ticket) (*entity.Ticket
 	}
 
 	return ticket, nil
+}
+
+func (r *ticketRepository) FindTicketByBookingNumber(bookingNumber string) (*entity.Ticket, error) {
+	ticket := new(entity.Ticket)
+
+	if err := r.db.Where("tickets.booking_num = ?", bookingNumber).Take(ticket).Error; err != nil {
+		return ticket, err
+	}
+
+	return ticket, nil
+}
+
+func (r *ticketRepository) DeleteTicketById(id uuid.UUID) error {
+
+	ticket := new(entity.Ticket)
+
+	if err := r.db.Where("tickets.id = ?", id).Take(ticket).Error; err != nil {
+		return err
+	}
+
+	if err := r.db.Where("tickets.id = ?", id).Delete(ticket).Error; err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *ticketRepository) DeleteTicketByBookingNumber(bookingNumber string) error {
+
+	ticket := new(entity.Ticket)
+
+	if err := r.db.Where("tickets.booking_num = ?", bookingNumber).Take(ticket).Error; err != nil {
+		return err
+	}
+
+	if err := r.db.Where("tickets.booking_num = ?", bookingNumber).Delete(ticket).Error; err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *ticketRepository) FindAllTickets() ([]entity.Ticket, error) {
+	var tickets []entity.Ticket
+	if err := r.db.Find(&tickets).Error; err != nil {
+		return nil, err
+	}
+	return tickets, nil
 }

@@ -21,13 +21,13 @@ func BuildAppPublicRoutes(db *gorm.DB, redisDB *redis.Client, encryptTool encryp
 	userService := service.NewUserService(userRepository, tokenUseCase, encryptTool, cfg)
 	userHandler := handler.NewUserHandler(userService)
 
-	ticketRepository := repository.NewTicketRepository(db)
-	ticketService := service.NewTicketService(ticketRepository)
-	ticketHandler := handler.NewTicketHandler(ticketService)
-
 	transactionRepository := repository.NewTransactionRepository(db)
 	transactionService := service.NewTransactionService(transactionRepository, db)
 	transactionHandler := handler.NewTransactionHandler(transactionService)
+
+	ticketRepository := repository.NewTicketRepository(db)
+	ticketService := service.NewTicketService(ticketRepository)
+	ticketHandler := handler.NewTicketHandler(ticketService, transactionService)
 
 	profileRepository := repository.NewProfileRepository(db, cacheable)
 	profileService := service.NewProfileService(profileRepository, encryptTool)
@@ -36,7 +36,6 @@ func BuildAppPublicRoutes(db *gorm.DB, redisDB *redis.Client, encryptTool encryp
 	eventRepository := repository.NewEventRepository(db)
 	eventService := service.NewEventService(eventRepository)
 	eventHandler := handler.NewEventHandler(eventService)
-
 
 	appHandler := handler.NewAppHandler(userHandler, transactionHandler, ticketHandler,profileHandler, eventHandler)
 	return router.AppPublicRoutes(appHandler)
@@ -53,13 +52,13 @@ func BuildAppPrivateRoutes(db *gorm.DB, redisDB *redis.Client, encryptTool encry
 	userService := service.NewUserService(userRepository, nil, encryptTool, cfg)
 	userHandler := handler.NewUserHandler(userService)
 
-	ticketRepository := repository.NewTicketRepository(db)
-	ticketService := service.NewTicketService(ticketRepository)
-	ticketHandler := handler.NewTicketHandler(ticketService)
-
 	transactionRepository := repository.NewTransactionRepository(db)
 	transactionService := service.NewTransactionService(transactionRepository, db)
 	transactionHandler := handler.NewTransactionHandler(transactionService)
+
+	ticketRepository := repository.NewTicketRepository(db)
+	ticketService := service.NewTicketService(ticketRepository)
+	ticketHandler := handler.NewTicketHandler(ticketService, transactionService)
 
 	eventRepository := repository.NewEventRepository(db)
 	eventService := service.NewEventService(eventRepository)
