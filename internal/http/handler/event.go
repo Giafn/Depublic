@@ -100,3 +100,89 @@ func (h *EventHandler) FindPricingByEventID(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "Sukses menampilkan data event", price))
 }
+
+func (h *EventHandler) GetEvents(c echo.Context) error {
+	allowedParams := map[string]bool{
+		"price":    true,
+		"province": true,
+		"timeStart":     true,
+		"category": true,
+		"sort":     true,
+	}
+
+	allowedSorts := map[string]bool{
+		"terbaru":  true,
+		"terdekat": true,
+		"termahal": true,
+		"termurah": true,
+	}
+
+	allowedTime := map[string]bool{
+		"day":true,
+		"night": true,
+	}
+
+	allowedCategory := map[string]bool{
+		"withSubmission":true,
+		"withoutSubmission": true,
+	}
+
+	allowedPrice := map[string]bool{
+		"0":true,
+		"<100000":true,
+		"<500000":true,
+		"<1000000":true,
+		"<2500000":true,
+		">5000000":true,
+	}
+
+	for key := range c.QueryParams() {
+		if !allowedParams[key] {
+			return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, "Query Parameter tidak dikenali"))
+		}
+	}
+
+	filter := make(map[string]interface{})
+
+	if price := c.QueryParam("price"); price != "" {
+		if price != "" && !allowedPrice[price] {
+			return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, "Nilai Parameter price tidak dikenali"))
+		}
+		filter["price"] = price
+	}
+
+	if province := c.QueryParam("province"); province != "" {
+		filter["province"] = province
+	}
+
+	if timeStart := c.QueryParam("timeStart"); timeStart != "" {
+		if timeStart != "" && !allowedTime[timeStart] {
+			return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, "Nilai Parameter timeStart tidak dikenali"))
+		}
+		filter["timeStart"] = timeStart
+	}
+
+	if category := c.QueryParam("category"); category != "" {
+		if category != "" && !allowedCategory[category] {
+			return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, "Nilai Parameter category tidak dikenali"))
+		}
+		filter["category"] = category
+	}
+
+	sort := c.QueryParam("sort")
+
+	if sort != "" && !allowedSorts[sort] {
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, "Nilai Parameter sort tidak dikenali"))
+	}
+
+	events, err := h.eventService.GetEvents(filter, sort)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, response.ErrorResponse(http.StatusInternalServerError, err.Error()))
+	}
+
+	if len(events) == 0 {
+		return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "Data Event Tidak Ditemukan Satupun", nil))
+	}
+
+	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "Berhasil Menampilkan Events",events))
+}
