@@ -14,30 +14,32 @@ type Ticket struct {
 	ID            uuid.UUID `json:"id"`
 	TransactionID string    `json:"transaction_id"`
 	EventID       string    `json:"event_id"`
-	Name          string    `json:"name"`
-	BookingNum    string    `json:"booking_num"`
-	IsUsed        bool      `json:"is_used"`
+	Name          string    `json:"name"` // nama pemilik tiket
+	BookingNum    string    `json:"bookingNum"`
+	IsUsed        bool      `json:"isUsed"`
 	PricingID     string    `json:"pricing_id"`
+	Auditable
 }
 
-func NewTicket(idTransaction, idEvent, name string, pricingID string) *Ticket {
+func NewTicket(transactionID, eventID, name string, pricingID string) *Ticket {
 	return &Ticket{
 		ID:            uuid.New(),
-		TransactionID: idTransaction,
-		EventID:       idEvent,
+		TransactionID: transactionID,
+		EventID:       eventID,
 		Name:          name,
-		BookingNum:    createBookingNumber(idTransaction, idEvent, name),
+		BookingNum:    createBookingNumber(transactionID, eventID, name),
 		IsUsed:        false,
 		PricingID:     pricingID,
+		Auditable:     NewAuditable(),
 	}
 }
 
-func createBookingNumber(idTransaction, idEvent, visitorName string) string {
+func createBookingNumber(transactionID, eventID, visitorName string) string {
 	// Get the current timestamp in nanoseconds
 	timestamp := time.Now().UnixNano()
 
 	// Create a string to hash by concatenating the input values and timestamp
-	input := fmt.Sprintf("%s-%s-%s-%d", idTransaction, idEvent, visitorName, timestamp)
+	input := fmt.Sprintf("%s-%s-%s-%d", transactionID, eventID, visitorName, timestamp)
 
 	// Create a SHA-256 hash of the input string
 	hash := sha256.New()
@@ -62,6 +64,7 @@ func UpdateTicket(oldTicket Ticket, name string) *Ticket {
 		BookingNum:    oldTicket.BookingNum,
 		IsUsed:        oldTicket.IsUsed,
 		PricingID:     oldTicket.PricingID,
+		Auditable:     UpdateAuditable(),
 	}
 }
 
@@ -74,5 +77,6 @@ func ValidateTicket(oldTicket Ticket) *Ticket {
 		BookingNum:    oldTicket.BookingNum,
 		IsUsed:        true,
 		PricingID:     oldTicket.PricingID,
+		Auditable:     UpdateAuditable(),
 	}
 }

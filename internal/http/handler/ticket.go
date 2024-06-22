@@ -9,6 +9,8 @@ import (
 	"github.com/Giafn/Depublic/internal/repository"
 	"github.com/Giafn/Depublic/internal/service"
 	"github.com/Giafn/Depublic/pkg/response"
+	"github.com/Giafn/Depublic/pkg/token"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 
@@ -35,14 +37,14 @@ func (h *TicketHandler) CreateTicket(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, response.SuccessResponse(http.StatusBadRequest, errorMessage, data))
 	}
 
-	idTransaction, err := uuid.Parse(input.IDTransaction)
-	fmt.Println(idTransaction)
+	transactionId, err := uuid.Parse(input.TransactionID)
+	fmt.Println(transactionId)
 
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 
-	_, err = h.transactionService.FindTransactionByID(idTransaction)
+	_, err = h.transactionService.FindTransactionByID(transactionId)
 
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, err.Error()))
@@ -51,7 +53,7 @@ func (h *TicketHandler) CreateTicket(c echo.Context) error {
 	for i := 0; i < len(input.Data); i++ {
 
 		fmt.Println(input.Data[i].Name)
-		newTicket := entity.NewTicket(input.IDTransaction, input.IDEvent, input.Data[i].Name, "")
+		newTicket := entity.NewTicket(input.TransactionID, input.EventID, input.Data[i].Name, "")
 
 		fmt.Println("id trx")
 		fmt.Println(newTicket.TransactionID)
@@ -65,12 +67,6 @@ func (h *TicketHandler) CreateTicket(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "sukses membuat tiket", nil))
-}
-
-func (h *TicketHandler) Test(c echo.Context) error {
-	fmt.Println("halo")
-
-	return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, "testtt aja emg sengaja error"))
 }
 
 func (h *TicketHandler) FindTicketByID(c echo.Context) error {
@@ -163,14 +159,14 @@ func (h *TicketHandler) ValidateTicket(c echo.Context) error {
 	id := uuid.MustParse(input.ID)
 
 	oldTicket, err := h.ticketService.FindTicketByID(id)
+	fmt.Println("old ticket")
+	fmt.Println(oldTicket.IsUsed) //false
 
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, err.Error()))
 	}
 
-	requestedTicket := entity.ValidateTicket(*oldTicket)
-
-	validatedTicket, err := h.ticketService.ValidateTicket(requestedTicket)
+	validatedTicket, err := h.ticketService.ValidateTicket(oldTicket)
 
 	if err != nil {
 		fmt.Println(err)
@@ -179,13 +175,6 @@ func (h *TicketHandler) ValidateTicket(c echo.Context) error {
 		}
 		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, err.Error()))
 	}
-
-	// fmt.Println("3")
-	// fmt.Println(validatedTicket.IsUsed)
-
-	// if err != nil {
-	// 	return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, err.Error()))
-	// }
 
 	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "sukses memvalidasi tiket", validatedTicket))
 }
@@ -218,6 +207,7 @@ func (h *TicketHandler) DeleteTicketByBookingNumber(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "tiket berhasil dihapus", nil))
 }
+
 func (h *TicketHandler) FindAllTickets(c echo.Context) error {
 	tickets, err := h.ticketService.FindAllTickets()
 	if err != nil {
@@ -225,4 +215,43 @@ func (h *TicketHandler) FindAllTickets(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "sukses menampilkan seluruh tiket", tickets))
+}
+
+func (h *TicketHandler) FindTicketsByTransactionId(c echo.Context) error {
+	param := c.Param("transactionId")
+	transactionId, err := uuid.Parse(param)
+
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, err.Error()))
+	}
+
+	tickets, err := h.ticketService.FindTicketsByTransactionId(transactionId)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, response.ErrorResponse(http.StatusInternalServerError, err.Error()))
+	}
+
+	message := fmt.Sprintf("sukses menampilkan seluruh tiket dengan transaction id %s", param)
+
+	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, message, tickets))
+}
+
+func (h *TicketHandler) FindTicketsByUser(c echo.Context) error {
+	dataUser, _ := c.Get("user").(*jwt.Token)
+	claims := dataUser.Claims.(*token.JwtCustomClaims)
+
+	userID, err := uuid.Parse(claims.ID)
+
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, err.Error()))
+	}
+
+	tickets, err := h.ticketService.FindTicketsByUser(userID)
+
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, response.ErrorResponse(http.StatusInternalServerError, err.Error()))
+	}
+
+	message := fmt.Sprintf("sukses menampilkan seluruh tiket milik user %s", userID)
+
+	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, message, tickets))
 }
