@@ -1,6 +1,11 @@
 package service
 
-import "github.com/Giafn/Depublic/pkg/background_job"
+import (
+	"strconv"
+	"time"
+
+	"github.com/Giafn/Depublic/pkg/background_job"
+)
 
 func ScheduleEmails(emailAddresses string, subject, body string) {
 	background_job.ScheduleEmails(
@@ -112,4 +117,118 @@ func CreateConfirmationAccountEmailHtml(confirmationUrl string, userName string)
 	
 	</body>
 	</html>`
+}
+
+func CreateSuccessPaymentEmailHtml(userName string, status string, amont int, transactionId string) string {
+	icon := "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRaJ4ujIv5bf--FOG7O-6gBYHgTbOprfyyOyg&s"
+	if status == "accepted" {
+		icon = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRRqyzZL1qSjV5EIZ3upakU1NV3_SswUdtAdg&s"
+	}
+	// format amount to readable string
+	amontFormatted := strconv.Itoa(amont)
+	if amont > 1000 {
+		amontFormatted = strconv.Itoa(amont/1000) + "K"
+	}
+
+	html := `<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+	<html style="-webkit-font-smoothing: antialiased; background-color: #f5f6fa; margin: 0; padding: 0;">
+		<head>
+			<meta name="viewport" content="width=device-width, initial-scale=1">
+			<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+			<meta name="format-detection" content="telephone=no">
+			<title>GO Email Templates: Generic Template</title>
+			
+		</head>
+		<body  class="generic-template" style="-moz-osx-font-smoothing: grayscale; -webkit-font-smoothing: antialiased; background-color: #f5f6fa; margin: 0; padding: 0;">
+	
+			<table cellpadding="0" cellspacing="0" cols="1" align="center" style="max-width: 600px;">
+				<tr bgcolor="#f5f6fa">
+					<td height="50" style="color: #464646; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; line-height: 16px; vertical-align: top;"></td>
+				</tr>
+	
+				<tr bgcolor="#f5f6fa">
+					<td style="color: #464646; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; line-height: 16px; vertical-align: top;">
+						<!-- Seperator Start -->
+						<table cellpadding="0" cellspacing="0" cols="1" bgcolor="#f5f6fa" align="center" style="max-width: 600px; width: 100%;">
+							<tr bgcolor="#f5f6fa">
+								<td height="30" style="color: #464646; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; line-height: 16px; vertical-align: top;"></td>
+							</tr>
+						</table>
+						<!-- Seperator End -->
+	
+	 <!-- Generic Pod Left Aligned with Price breakdown Start -->
+						<table align="center" cellpadding="0" cellspacing="0" cols="3" bgcolor="white" class="bordered-left-right" style="border-left: 10px solid #f5f6fa; border-right: 10px solid #f5f6fa; max-width: 600px; width: 100%;">
+							<tr height="50"><td colspan="3" style="color: #464646; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; line-height: 16px; vertical-align: top;"></td></tr>
+							<tr align="center">
+								<td width="36" style="color: #464646; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; line-height: 16px; vertical-align: top;"></td>
+								<td class="text-primary" style="color: #F16522; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; line-height: 16px; vertical-align: top;">
+									<img src="` + icon + `" alt="GO" width="100" style="border: 0; font-size: 0; margin: 0; max-width: 100%; padding: 0;">
+								</td>
+								<td width="36" style="color: #464646; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; line-height: 16px; vertical-align: top;"></td>
+							</tr>
+							<tr height="17"><td colspan="3" style="color: #464646; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; line-height: 16px; vertical-align: top;"></td></tr>
+							<tr align="center">
+								<td width="36" style="color: #464646; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; line-height: 16px; vertical-align: top;"></td>
+								<td class="text-primary" style="color: #F16522; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; line-height: 16px; vertical-align: top;">
+									<h1 style="color: #0052e2; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 30px; font-weight: 700; line-height: 34px; margin-bottom: 0; margin-top: 0;">Payment ` + status + `</h1>
+								</td>
+								<td width="36" style="color: #464646; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; line-height: 16px; vertical-align: top;"></td>
+							</tr>
+							<tr height="30"><td colspan="3" style="color: #464646; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; line-height: 16px; vertical-align: top;"></td></tr>
+							<tr align="left">
+								<td width="36" style="color: #464646; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; line-height: 16px; vertical-align: top;"></td>
+								<td style="color: #464646; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; line-height: 16px; vertical-align: top;">
+									<p style="color: #464646; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; line-height: 22px; margin: 0;">
+										Hi ` + userName + `, 
+									</p>
+								</td>
+								<td width="36" style="color: #464646; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; line-height: 16px; vertical-align: top;"></td>
+							</tr>
+							<tr height="10"><td colspan="3" style="color: #464646; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; line-height: 16px; vertical-align: top;"></td></tr>
+							<tr align="left">
+								<td width="36" style="color: #464646; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; line-height: 16px; vertical-align: top;"></td>
+								<td style="color: #464646; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; line-height: 16px; vertical-align: top;">
+									<p style="color: #464646; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; line-height: 22px; margin: 0;">Your transaction was ` + status + `!</p>
+									<br>
+									<p style="color: #464646; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; line-height: 22px; margin: 0; "><strong>Payment Details:</strong><br/>
+	
+	Amount: ` + amontFormatted + `<p/>
+										<br>
+									<p style="color: #464646; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; line-height: 22px; margin: 0;">We advise to keep this email for future reference.&nbsp;&nbsp;&nbsp;&nbsp;<br/></p>
+								</td>
+								<td width="36" style="color: #464646; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; line-height: 16px; vertical-align: top;"></td>
+							</tr>
+							<tr height="30">
+								<td style="color: #464646; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; line-height: 16px; vertical-align: top;"></td>
+								<td style="border-bottom: 1px solid #D3D1D1; color: #464646; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; line-height: 16px; vertical-align: top;"></td>
+								<td style="color: #464646; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; line-height: 16px; vertical-align: top;"></td>
+							</tr>
+							<tr height="30"><td colspan="3" style="color: #464646; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; line-height: 16px; vertical-align: top;"></td></tr>
+							<tr align="center">
+								<td width="36" style="color: #464646; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; line-height: 16px; vertical-align: top;"></td>
+								<td style="color: #464646; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; line-height: 16px; vertical-align: top;">
+									<p style="color: #464646; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; line-height: 22px; margin: 0;"><strong>Transaction reference: ` + transactionId + `</strong></p>
+									<p style="color: #464646; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; line-height: 22px; margin: 0;">Order date: ` + time.Now().Format("2006-01-02 15:04:05") + `</p>
+									<p style="color: #464646; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; line-height: 22px; margin: 0;"></p>
+								</td>
+								<td width="36" style="color: #464646; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; line-height: 16px; vertical-align: top;"></td>
+							</tr>
+	
+							<tr height="50">
+								<td colspan="3" style="color: #464646; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; line-height: 16px; vertical-align: top;"></td>
+							</tr>
+	
+						</table>
+						<table cellpadding="0" cellspacing="0" cols="1" bgcolor="#f5f6fa" align="center" style="max-width: 600px; width: 100%;">
+							<tr bgcolor="#f5f6fa">
+								<td height="50" style="color: #464646; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; line-height: 16px; vertical-align: top;"></td>
+							</tr>
+						</table>
+					</td>
+				</tr>
+			</table>
+		</body>
+	</html>`
+
+	return html
 }
