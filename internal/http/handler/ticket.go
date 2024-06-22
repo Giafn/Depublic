@@ -53,7 +53,7 @@ func (h *TicketHandler) CreateTicket(c echo.Context) error {
 	for i := 0; i < len(input.Data); i++ {
 
 		fmt.Println(input.Data[i].Name)
-		newTicket := entity.NewTicket(input.TransactionID, input.EventID, input.Data[i].Name)
+		newTicket := entity.NewTicket(input.TransactionID, input.EventID, input.Data[i].Name, "")
 
 		fmt.Println("id trx")
 		fmt.Println(newTicket.TransactionID)
@@ -222,13 +222,13 @@ func (h *TicketHandler) FindTicketsByTransactionId(c echo.Context) error {
 	transactionId, err := uuid.Parse(param)
 
 	if err != nil {
-        return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, err.Error()))
-    }
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, err.Error()))
+	}
 
 	tickets, err := h.ticketService.FindTicketsByTransactionId(transactionId)
 	if err != nil {
-        return c.JSON(http.StatusInternalServerError, response.ErrorResponse(http.StatusInternalServerError, err.Error()))
-    }
+		return c.JSON(http.StatusInternalServerError, response.ErrorResponse(http.StatusInternalServerError, err.Error()))
+	}
 
 	message := fmt.Sprintf("sukses menampilkan seluruh tiket dengan transaction id %s", param)
 
@@ -242,14 +242,14 @@ func (h *TicketHandler) FindTicketsByUser(c echo.Context) error {
 	userID, err := uuid.Parse(claims.ID)
 
 	if err != nil {
-        return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, err.Error()))
-    }
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, err.Error()))
+	}
 
 	tickets, err := h.ticketService.FindTicketsByUser(userID)
 
 	if err != nil {
-        return c.JSON(http.StatusInternalServerError, response.ErrorResponse(http.StatusInternalServerError, err.Error()))
-    }
+		return c.JSON(http.StatusInternalServerError, response.ErrorResponse(http.StatusInternalServerError, err.Error()))
+	}
 
 	message := fmt.Sprintf("sukses menampilkan seluruh tiket milik user %s", userID)
 

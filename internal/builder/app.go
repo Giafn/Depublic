@@ -22,7 +22,7 @@ func BuildAppPublicRoutes(db *gorm.DB, redisDB *redis.Client, encryptTool encryp
 	userHandler := handler.NewUserHandler(userService)
 
 	transactionRepository := repository.NewTransactionRepository(db)
-	transactionService := service.NewTransactionService(transactionRepository, db, cfg)
+	transactionService := service.NewTransactionService(transactionRepository, db, encryptTool, cfg)
 	transactionHandler := handler.NewTransactionHandler(transactionService)
 
 	ticketRepository := repository.NewTicketRepository(db)
@@ -41,7 +41,7 @@ func BuildAppPublicRoutes(db *gorm.DB, redisDB *redis.Client, encryptTool encryp
 	notificationService := service.NewNotificationService(notificationRepository)
 	notificationHandler := handler.NewNotificationHandler(notificationService)
 
-	appHandler := handler.NewAppHandler(userHandler, transactionHandler, ticketHandler,profileHandler, eventHandler, notificationHandler)
+	appHandler := handler.NewAppHandler(userHandler, transactionHandler, ticketHandler, profileHandler, eventHandler, notificationHandler, nil)
 	return router.AppPublicRoutes(appHandler)
 }
 
@@ -57,7 +57,7 @@ func BuildAppPrivateRoutes(db *gorm.DB, redisDB *redis.Client, encryptTool encry
 	userHandler := handler.NewUserHandler(userService)
 
 	transactionRepository := repository.NewTransactionRepository(db)
-	transactionService := service.NewTransactionService(transactionRepository, db, cfg)
+	transactionService := service.NewTransactionService(transactionRepository, db, encryptTool, cfg)
 	transactionHandler := handler.NewTransactionHandler(transactionService)
 
 	ticketRepository := repository.NewTicketRepository(db)
@@ -72,8 +72,10 @@ func BuildAppPrivateRoutes(db *gorm.DB, redisDB *redis.Client, encryptTool encry
 	notificationService := service.NewNotificationService(notificationRepository)
 	notificationHandler := handler.NewNotificationHandler(notificationService)
 
+	submissionRepository := repository.NewSubmissionRepository(db, cacheable)
+	submissionService := service.NewSubmissionService(submissionRepository)
+	submissionHandler := handler.NewSubmissionHandler(submissionService)
 
-
-	appHandler := handler.NewAppHandler(userHandler, transactionHandler, ticketHandler,profileHandler, eventHandler, notificationHandler)
+	appHandler := handler.NewAppHandler(userHandler, transactionHandler, ticketHandler, profileHandler, eventHandler, notificationHandler, submissionHandler)
 	return router.AppPrivateRoutes(appHandler)
 }

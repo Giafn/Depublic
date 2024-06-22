@@ -129,9 +129,8 @@ func (s *userService) RegisterUser(input *binder.UserRegisterRequest, file *mult
 		return nil, err
 	}
 
-	url := fmt.Sprintf("%s:%s/app/api/v1/account/verify/%s", s.cfg.Host, s.cfg.Port, newUser.UserId.String())
-	fmt.Println(url)
-	html := "<h1>Account Confirmation</h1><p>Click <a href='" + url + "'>here</a> to confirm your account</p>"
+	url := fmt.Sprintf("http://%s:%s/app/api/v1/account/verify/%s", s.cfg.Host, s.cfg.Port, newUser.UserId.String())
+	html := CreateConfirmationAccountEmailHtml(url, input.FullName)
 
 	ScheduleEmails(
 		user.Email,
@@ -210,7 +209,7 @@ func (s *userService) ResendEmailVerification(email string) error {
 	}
 
 	url := fmt.Sprintf("http://%s:%s/app/api/v1/account/verify/%s", s.cfg.Host, s.cfg.Port, user.UserId.String())
-	html := "<h1>Account Confirmation</h1><p>Click <a href='" + url + "'>here</a> to confirm your account</p>"
+	html := CreateConfirmationAccountEmailHtml(url, user.Profiles.FullName)
 
 	ScheduleEmails(
 		user.Email,

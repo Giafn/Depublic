@@ -90,8 +90,8 @@ func UploadFile(file *multipart.FileHeader, folder string) (string, error) {
 
 	fileExtension := strings.ToLower(filepath.Ext(file.Filename))
 
-	if fileExtension != ".pdf" {
-		return "", fmt.Errorf("ekstensi file tidak valid. Hanya .pdf yang diperbolehkan")
+	if fileExtension != ".pdf" && fileExtension != ".doc" && fileExtension != ".docx" {
+		return "", fmt.Errorf("ekstensi file tidak valid. Hanya .pdf, .doc, .docx yang diperbolehkan")
 	}
 
 	fileName := file.Filename

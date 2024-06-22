@@ -36,6 +36,10 @@ func (h *TransactionHandler) CreateTransaction(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, response.SuccessResponse(http.StatusBadRequest, errorMessage, data))
 	}
 
+	if len(input.Tickets) != input.TicketQuantity {
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, "Invalid ticket quantity"))
+	}
+
 	dataUser, _ := c.Get("user").(*jwt.Token)
 	claims := dataUser.Claims.(*token.JwtCustomClaims)
 
@@ -60,7 +64,7 @@ func (h *TransactionHandler) CreateTransaction(c echo.Context) error {
 		}))
 	}
 
-	res["payment_url"] = transaction.PaymentURL
+	res["payment_url"] = h.maskingPaymentURL(transaction.PaymentURL, transaction.ID)
 
 	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "Transaction created successfully", res))
 }
@@ -82,6 +86,20 @@ func (h *TransactionHandler) FindTransactionByID(c echo.Context) error {
 
 func (h *TransactionHandler) FindAllTransactions(c echo.Context) error {
 	transactions, err := h.transactionService.FindAllTransactions()
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, response.ErrorResponse(http.StatusInternalServerError, err.Error()))
+	}
+
+	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "sukses menampilkan data transaksi", transactions))
+}
+
+func (h *TransactionHandler) FindMyTransactions(c echo.Context) error {
+	dataUser, _ := c.Get("user").(*jwt.Token)
+	claims := dataUser.Claims.(*token.JwtCustomClaims)
+
+	userID := uuid.MustParse(claims.ID)
+
+	transactions, err := h.transactionService.FindMyTransactions(userID)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, response.ErrorResponse(http.StatusInternalServerError, err.Error()))
 	}
@@ -162,6 +180,23 @@ func (h *TransactionHandler) WebhookPayment(c echo.Context) error {
 		return c.String(http.StatusInternalServerError, "Internal Server Error")
 	}
 
+	if transaction.IsPaid {
+		fmt.Println("Transaction already paid")
+		return c.String(http.StatusOK, "Webhook received successfully")
+	}
+
+	tickets, err := h.transactionService.GetTicketsByTransactionID(transID)
+	if err != nil {
+		fmt.Println("Error getting tickets:", err)
+		return c.String(http.StatusInternalServerError, "Internal Server Error")
+	}
+
+	err = h.transactionService.UpdateTicketRemaining(tickets)
+	if err != nil {
+		fmt.Println("Error checking ticket availability:", err)
+		return c.String(http.StatusInternalServerError, "Internal Server Error")
+	}
+
 	transaction.IsPaid = true
 	_, err = h.transactionService.UpdateTransaction(transaction)
 
@@ -169,8 +204,40 @@ func (h *TransactionHandler) WebhookPayment(c echo.Context) error {
 		fmt.Println("Error updating transaction:", err)
 		return c.String(http.StatusInternalServerError, "Internal Server Error")
 	}
+	user, _ := h.transactionService.GetUsersById(transaction.UserID)
+	service.ScheduleEmails(
+		user.Email,
+		"Payment Confirmation",
+		"Your payment has been confirmed",
+	)
 
 	return c.String(http.StatusOK, "Webhook received successfully")
 }
 
-// table
+func (h *TransactionHandler) maskingPaymentURL(url string, transactionId uuid.UUID) string {
+	encryptedURL, err := h.transactionService.EncryptPaymentURL(url, transactionId)
+	if err != nil {
+		return url
+	}
+	return encryptedURL
+}
+
+func (h *TransactionHandler) PaymentRedirect(c echo.Context) error {
+	payId := c.QueryParam("pay_id")
+	decryptedURL, err := h.transactionService.DecryptPaymentURL(payId)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, response.ErrorResponse(http.StatusInternalServerError, err.Error()))
+	}
+	transID := c.QueryParam("transaction_id")
+
+	isAvaliable, err := h.transactionService.CheckTicketAvailability(uuid.MustParse(transID))
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, response.ErrorResponse(http.StatusInternalServerError, err.Error()))
+	}
+
+	if !isAvaliable {
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, "Ticket is not available"))
+	}
+
+	return c.Redirect(http.StatusTemporaryRedirect, decryptedURL)
+}

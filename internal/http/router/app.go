@@ -18,7 +18,7 @@ var (
 	onlyAdmin           = []string{Admin}
 	onlyUser            = []string{User}
 	onlyPetugasLapangan = []string{PetugasLapangan}
-	excludeUser = []string{Admin, PetugasLapangan}
+	excludeUser         = []string{Admin, PetugasLapangan}
 )
 
 func AppPublicRoutes(Handler handler.AppHandler) []*route.Route {
@@ -78,6 +78,11 @@ func AppPublicRoutes(Handler handler.AppHandler) []*route.Route {
 			Path:    "/event/pricing/:id",
 			Handler: eventHandler.FindPricingByEventID,
 		},
+		{
+			Method:  http.MethodGet,
+			Path:    "/payment",
+			Handler: transactionHandler.PaymentRedirect,
+		},
 	}
 }
 
@@ -87,6 +92,7 @@ func AppPrivateRoutes(Handler handler.AppHandler) []*route.Route {
 	transactionHandler := Handler.TransactionHandler
 	eventHandler := Handler.EventHandler
 	ticketHandler := Handler.TicketHandler
+	submissionHandler := Handler.SubmissionHandler
 	notificationHandler := Handler.NotificationHandler
 
 	return []*route.Route{
@@ -229,6 +235,18 @@ func AppPrivateRoutes(Handler handler.AppHandler) []*route.Route {
 			Roles:   onlyAdmin,
 		},
 		{
+			Method:  http.MethodGet,
+			Path:    "/mytransactions",
+			Handler: transactionHandler.FindMyTransactions,
+			Roles:   onlyUser,
+		},
+		{
+			Method:  http.MethodGet,
+			Path:    "/mytransactions",
+			Handler: transactionHandler.FindMyTransactions,
+			Roles:   onlyUser,
+		},
+		{
 			Method:  http.MethodPost,
 			Path:    "/transactions",
 			Handler: transactionHandler.CreateTransaction,
@@ -262,7 +280,7 @@ func AppPrivateRoutes(Handler handler.AppHandler) []*route.Route {
 			Method:  http.MethodGet,
 			Path:    "/notifications",
 			Handler: notificationHandler.FindAllNotification,
-			Roles:  allRoles,
+			Roles:   allRoles,
 		},
 		{
 			Method:  http.MethodGet,
@@ -274,20 +292,27 @@ func AppPrivateRoutes(Handler handler.AppHandler) []*route.Route {
 			Method:  http.MethodPatch,
 			Path:    "/notifications",
 			Handler: notificationHandler.MarkAllNotificationsAsSeen,
-			Roles:  allRoles,
+			Roles:   allRoles,
 		},
 		{
 			Method:  http.MethodDelete,
 			Path:    "/notifications",
 			Handler: notificationHandler.DeleteSeenNotifications,
-			Roles:  allRoles,
+			Roles:   allRoles,
 		},
 		{
 			Method:  http.MethodDelete,
 			Path:    "/notifications/:id",
 			Handler: notificationHandler.DeleteNotificationByID,
-			Roles:  allRoles,
+			Roles:   allRoles,
 		},
-		
+
+		// submission
+		{
+			Method:  http.MethodPost,
+			Path:    "/submission",
+			Handler: submissionHandler.CreateSubmission,
+			Roles:   allRoles,
+		},
 	}
 }

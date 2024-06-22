@@ -9,26 +9,28 @@ import (
 )
 
 type AppHandler struct {
-	WelcomeHandler     echo.HandlerFunc
-	FileReader         echo.HandlerFunc
-	UserHandler        UserHandler
-	ProfileHandler     ProfileHandler
-	EventHandler       EventHandler
-	TransactionHandler TransactionHandler
-	TicketHandler      TicketHandler
+	WelcomeHandler      echo.HandlerFunc
+	FileReader          echo.HandlerFunc
+	UserHandler         UserHandler
+	ProfileHandler      ProfileHandler
+	EventHandler        EventHandler
+	TransactionHandler  TransactionHandler
+	TicketHandler       TicketHandler
 	NotificationHandler NotificationHandler
+	SubmissionHandler   SubmissionHandler
 }
 
-func NewAppHandler(userHandler UserHandler, transactionHandler TransactionHandler, ticketHandler TicketHandler, proprofileHandler ProfileHandler, eventHandler EventHandler, notificationHandler NotificationHandler) AppHandler {
+func NewAppHandler(userHandler UserHandler, transactionHandler TransactionHandler, ticketHandler TicketHandler, proprofileHandler ProfileHandler, eventHandler EventHandler, notificationHandler NotificationHandler, submissionHandler SubmissionHandler) AppHandler {
 	return AppHandler{
-		WelcomeHandler:     welcome,
-		FileReader:         fileReader,
-		UserHandler:        userHandler,
-		EventHandler:       eventHandler,
-		TransactionHandler: transactionHandler,
-		TicketHandler:      ticketHandler,
-		ProfileHandler:     proprofileHandler,
+		WelcomeHandler:      welcome,
+		FileReader:          fileReader,
+		UserHandler:         userHandler,
+		EventHandler:        eventHandler,
+		TransactionHandler:  transactionHandler,
+		TicketHandler:       ticketHandler,
+		ProfileHandler:      proprofileHandler,
 		NotificationHandler: notificationHandler,
+		SubmissionHandler:   submissionHandler,
 	}
 }
 
