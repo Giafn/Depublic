@@ -9,14 +9,28 @@ import (
 )
 
 type AppHandler struct {
-	WelcomeHandler echo.HandlerFunc
-	UserHandler    UserHandler
+	WelcomeHandler      echo.HandlerFunc
+	FileReader          echo.HandlerFunc
+	UserHandler         UserHandler
+	ProfileHandler      ProfileHandler
+	EventHandler        EventHandler
+	TransactionHandler  TransactionHandler
+	TicketHandler       TicketHandler
+	NotificationHandler NotificationHandler
+	SubmissionHandler   SubmissionHandler
 }
 
-func NewAppHandler(userHandler UserHandler) AppHandler {
+func NewAppHandler(userHandler UserHandler, transactionHandler TransactionHandler, ticketHandler TicketHandler, proprofileHandler ProfileHandler, eventHandler EventHandler, notificationHandler NotificationHandler, submissionHandler SubmissionHandler) AppHandler {
 	return AppHandler{
-		WelcomeHandler: welcome,
-		UserHandler:    userHandler,
+		WelcomeHandler:      welcome,
+		FileReader:          fileReader,
+		UserHandler:         userHandler,
+		EventHandler:        eventHandler,
+		TransactionHandler:  transactionHandler,
+		TicketHandler:       ticketHandler,
+		ProfileHandler:      proprofileHandler,
+		NotificationHandler: notificationHandler,
+		SubmissionHandler:   submissionHandler,
 	}
 }
 
@@ -33,4 +47,25 @@ func checkValidation(input interface{}) (errorMessage string, data interface{}) 
 		return "validasi input gagal", validationErrors
 	}
 	return "", nil
+}
+
+func fileReader(c echo.Context) error {
+	type File struct {
+		FilePath string `param:"filepath" validate:"required"`
+	}
+	input := new(File)
+
+	if err := c.Bind(input); err != nil {
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, "ada kesalahan input"))
+	}
+
+	if errorMessage, data := checkValidation(input); errorMessage != "" {
+		return c.JSON(http.StatusBadRequest, response.SuccessResponse(http.StatusBadRequest, errorMessage, data))
+	}
+
+	if input.FilePath[:7] != "uploads" {
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, "Not Found"))
+	}
+
+	return c.File(input.FilePath)
 }

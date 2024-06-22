@@ -9,11 +9,14 @@ import (
 
 type Config struct {
 	Env      string         `env:"ENV" envDefault:"development"`
+	Host     string         `env:"HOST" envDefault:"localhost"`
 	Port     string         `env:"PORT" envDefault:"8000"`
 	Postgres PostgresConfig `envPrefix:"POSTGRES_"`
 	JWT      JWTConfig      `envPrefix:"JWT_"`
 	Redis    RedisConfig    `envPrefix:"REDIS_"`
 	Encrypt  EncryptConfig  `envPrefix:"ENCRYPT_"`
+	SMTP     SMTPConfig     `envPrefix:"SMTP_"`
+	Midtrans MidtransConfig `envPrefix:"MIDTRANS_"`
 }
 
 type PostgresConfig struct {
@@ -26,6 +29,7 @@ type PostgresConfig struct {
 
 type JWTConfig struct {
 	SecretKey string `env:"SECRET_KEY" envDefault:"secret"`
+	ExpiresAt int    `env:"EXPIRES_AT" envDefault:"24"`
 }
 
 type RedisConfig struct {
@@ -37,6 +41,21 @@ type RedisConfig struct {
 type EncryptConfig struct {
 	SecretKey string `env:"SECRET_KEY" envDefault:"secret"`
 	Iv        string `env:"IV" envDefault:"iv"`
+}
+
+type SMTPConfig struct {
+	Host string `env:"HOST" envDefault:"smtp.gmail.com"`
+	Port string `env:"PORT" envDefault:"587"`
+	User string `env:"USER" envDefault:""`
+	Pass string `env:"PASS" envDefault:""`
+	From string `env:"FROM" envDefault:"depublic@gmail.com"`
+}
+
+type MidtransConfig struct {
+	ClientKey    string `env:"CLIENT_KEY" envDefault:""`
+	ServerKey    string `env:"SERVER_KEY" envDefault:""`
+	IsProduction bool   `env:"IS_PRODUCTION" envDefault:"false"`
+	URL          string `env:"URL" envDefault:"https://api.sandbox.midtrans.com/snap/v1"`
 }
 
 func NewConfig() (*Config, error) {

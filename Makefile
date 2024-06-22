@@ -1,63 +1,65 @@
-# Nama file migrasi
+# Nama file migrasi & versi
 MIGRATION_NAME ?= new_migration
+# VERSION ?= 20240615102726
 
 # Direktori untuk menyimpan file migrasi
 MIGRATIONS_DIR = ./db/migrations
 APP_DIR = ./cmd/app
 
-DB_USER ?= postgres
-DB_PASSWORD ?= password
+DB_USER ?= dimskuy
+DB_PASSWORD ?= 123
 DB_HOST ?= localhost
 DB_PORT ?= 5432
 DB_NAME ?= depublic
 
-# URL koneksi basis data
 DB_URL = postgres://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=disable
 
-# Nama binari golang-migrate
-MIGRATE_BIN = $(shell which migrate)
+ifeq ($(OS),Windows_NT)
+    MIGRATE_BIN = $(shell where migrate.exe)
+else
+    MIGRATE_BIN = $(shell which migrate)
+endif
 
-# Mendapatkan timestamp saat ini
-TIMESTAMP = $(shell date +%Y%m%d%H%M%S)
+TIMESTAMP = $(shell date +%Y%m%d%H%M%S || powershell -Command "Get-Date -Format yyyyMMddHHmmss")
 
-# Membuat migrasi baru dengan timestamp tanpa sequential
 .PHONY: create-migration
 create-migration:
 	@echo "Creating new migration: $(TIMESTAMP)_$(MIGRATION_NAME)"
-	@touch $(MIGRATIONS_DIR)/$(TIMESTAMP)_$(MIGRATION_NAME).up.sql
-	@touch $(MIGRATIONS_DIR)/$(TIMESTAMP)_$(MIGRATION_NAME).down.sql
+	@echo.>$(MIGRATIONS_DIR)/$(TIMESTAMP)_$(MIGRATION_NAME).up.sql
+	@echo.>$(MIGRATIONS_DIR)/$(TIMESTAMP)_$(MIGRATION_NAME).down.sql
 
-# Menjalankan semua migrasi
 .PHONY: migrate-up
 migrate-up:
 	@echo "Running all up migrations"
 	@$(MIGRATE_BIN) -path $(MIGRATIONS_DIR) -database $(DB_URL) up
 
-# Membatalkan migrasi terakhir
 .PHONY: migrate-down
 migrate-down:
 	@echo "Rolling back last migration"
 	@$(MIGRATE_BIN) -path $(MIGRATIONS_DIR) -database $(DB_URL) down 1
 
-# Membatalkan semua migrasi
 .PHONY: migrate-down-all
 migrate-down-all:
 	@echo "Rolling back all migrations"
 	@$(MIGRATE_BIN) -path $(MIGRATIONS_DIR) -database $(DB_URL) down
 
-# Melihat status migrasi
 .PHONY: migrate-status
 migrate-status:
 	@echo "Checking migration status"
 	@$(MIGRATE_BIN) -path $(MIGRATIONS_DIR) -database $(DB_URL) version
 
-# Membuat ulang (rollback dan kemudian migrasi ulang) migrasi terakhir
+# .PHONY: migrate-fix
+# migrate-fix:
+# 	@echo "Fix Dirty Version"
+# 	@$(MIGRATE_BIN) -path $(MIGRATIONS_DIR) -database $(DB_URL) force $(VERSION)
+
 .PHONY: migrate-refresh
 migrate-refresh:
 	@echo "Refreshing migrations"
-	@$(MIGRATE_BIN) -path $(MIGRATIONS_DIR) -database $(DB_URL) down 1
-	@$(MIGRATE_BIN) -path $(MIGRATIONS_DIR) -database $(DB_URL) up 1
+	@$(MIGRATE_BIN) -path $(MIGRATIONS_DIR) -database $(DB_URL) down
+	@$(MIGRATE_BIN) -path $(MIGRATIONS_DIR) -database $(DB_URL) up 
 
+.PHONY: run-server
 run-server:
 	@echo "Running Go application"
 	@go run $(APP_DIR)/main.go
