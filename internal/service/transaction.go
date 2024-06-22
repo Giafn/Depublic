@@ -30,6 +30,8 @@ type TransactionService interface {
 	CheckTicketAvailability(transactionID uuid.UUID) (bool, error)
 	UpdateTicketRemaining(tickets []entity.Ticket) error
 	GetTicketsByTransactionID(transactionID uuid.UUID) ([]entity.Ticket, error)
+	GetEventByID(id uuid.UUID) (*entity.Event, error)
+	GetSubmissionByTransactionID(transactionID uuid.UUID) (*entity.Submission, error)
 }
 
 type transactionService struct {
@@ -52,6 +54,12 @@ func (s *transactionService) CreateTransaction(
 	userID uuid.UUID,
 	tickets []binder.Ticket,
 ) (transaction *entity.Transaction, mustUpload bool, err error) {
+
+	unpaidTransactionId, err := s.transactionRepository.FindUnpaidTransactionByUserID(userID, eventID)
+	if err != nil {
+		return nil, false, fmt.Errorf("error, there is unpaid transaction with transaction_id: %s", unpaidTransactionId)
+	}
+
 	totalAmount, err := s.CountAmountTickets(tickets, eventID)
 	if err != nil {
 		return nil, false, err
@@ -86,15 +94,21 @@ func (s *transactionService) CreateTransaction(
 		return nil, false, err
 	}
 
-	newTransaction.PaymentURL = paymentUrl
+	newTransaction.PaymentURL = s.maskingPaymentURL(paymentUrl, newTransaction.ID)
 
 	transaction, err = s.transactionRepository.CreateTransaction(newTransaction, entityTickets, eventID, userID)
 	if err != nil {
 		return nil, false, err
 	}
 
-	// check event submission
+	transaction.PaymentURL = s.maskingPaymentURL(paymentUrl, transaction.ID)
+	transaction, err = s.transactionRepository.UpdateTransaction(transaction)
+	if err != nil {
+		return nil, false, err
+	}
+
 	isMustUpload, err := s.checkEventSubmission(eventID)
+
 	if err != nil {
 		return nil, false, err
 	}
@@ -185,11 +199,12 @@ func (s *transactionService) requestPayment(transaction *entity.Transaction, use
 
 func (s *transactionService) checkEventSubmission(eventID uuid.UUID) (bool, error) {
 	event, err := s.transactionRepository.GetEventByID(eventID)
+	fmt.Println(event)
 	if err != nil {
 		return false, err
 	}
 
-	if !event.MustUpload {
+	if !event.MustUploadSubmission {
 		return false, nil
 	}
 
@@ -280,4 +295,28 @@ func (s *transactionService) GetTicketsByTransactionID(transactionID uuid.UUID) 
 		return nil, err
 	}
 	return tickets, nil
+}
+
+func (h *transactionService) maskingPaymentURL(url string, transactionId uuid.UUID) string {
+	encryptedURL, err := h.EncryptPaymentURL(url, transactionId)
+	if err != nil {
+		return url
+	}
+	return encryptedURL
+}
+
+func (s *transactionService) GetEventByID(id uuid.UUID) (*entity.Event, error) {
+	event, err := s.transactionRepository.GetEventByID(id)
+	if err != nil {
+		return nil, err
+	}
+	return event, nil
+}
+
+func (s *transactionService) GetSubmissionByTransactionID(transactionID uuid.UUID) (*entity.Submission, error) {
+	submission, err := s.transactionRepository.GetSubmissionByTransactionID(transactionID)
+	if err != nil {
+		return nil, err
+	}
+	return submission, nil
 }

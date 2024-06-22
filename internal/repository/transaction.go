@@ -2,6 +2,7 @@ package repository
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/Giafn/Depublic/internal/entity"
 	"github.com/google/uuid"
@@ -16,11 +17,13 @@ type TransactionRepository interface {
 	DeleteTransaction(id uuid.UUID) error
 	GetPricingByEventID(eventID uuid.UUID, pricingID uuid.UUID) (*entity.Pricing, error)
 	GetUsersById(id uuid.UUID) (*entity.User, error)
-	GetEventByID(id uuid.UUID) (*entity.Events, error)
+	GetEventByID(id uuid.UUID) (*entity.Event, error)
 	FindTransactionsByUserId(userID uuid.UUID) ([]entity.Transaction, error)
 	FindTicketByTransactionID(transactionID uuid.UUID) ([]entity.Ticket, error)
 	GetPricingById(pricingID uuid.UUID) (*entity.Pricing, error)
 	UpdatePricingRemaining(pricingId uuid.UUID, remaining int) (*entity.Pricing, error)
+	FindUnpaidTransactionByUserID(userID uuid.UUID, eventID uuid.UUID) (transId uuid.UUID, err error)
+	GetSubmissionByTransactionID(transactionID uuid.UUID) (*entity.Submission, error)
 }
 
 type transactionRepository struct {
@@ -107,8 +110,8 @@ func (r *transactionRepository) GetUsersById(id uuid.UUID) (*entity.User, error)
 }
 
 // GetEventByID
-func (r *transactionRepository) GetEventByID(id uuid.UUID) (*entity.Events, error) {
-	var event entity.Events
+func (r *transactionRepository) GetEventByID(id uuid.UUID) (*entity.Event, error) {
+	var event entity.Event
 	if err := r.db.First(&event, "id = ?", id).Error; err != nil {
 		return nil, err
 	}
@@ -145,4 +148,28 @@ func (r *transactionRepository) UpdatePricingRemaining(pricingId uuid.UUID, rema
 		return nil, err
 	}
 	return pricing, nil
+}
+
+func (r *transactionRepository) FindUnpaidTransactionByUserID(userID uuid.UUID, eventID uuid.UUID) (transId uuid.UUID, err error) {
+	var transaction entity.Transaction
+	transaction.ID = uuid.Nil
+	if err := r.db.Where("user_id = ?", userID).
+		Where("event_id = ?", eventID).
+		Where("is_paid = ?", false).
+		First(&transaction).Error; err != nil {
+		return uuid.Nil, nil
+	}
+
+	if transaction.ID != uuid.Nil {
+		return transaction.ID, fmt.Errorf("transaction with id %s is unpaid", transaction.ID)
+	}
+	return uuid.Nil, nil
+}
+
+func (r *transactionRepository) GetSubmissionByTransactionID(transactionID uuid.UUID) (*entity.Submission, error) {
+	var submission entity.Submission
+	if err := r.db.First(&submission, "transaction_id = ?", transactionID).Error; err != nil {
+		return nil, errors.New("please upload your submission")
+	}
+	return &submission, nil
 }

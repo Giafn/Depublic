@@ -1,12 +1,15 @@
 package handler
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/Giafn/Depublic/internal/entity"
 	"github.com/Giafn/Depublic/internal/http/binder"
 	"github.com/Giafn/Depublic/internal/service"
 	"github.com/Giafn/Depublic/pkg/response"
+	"github.com/Giafn/Depublic/pkg/token"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 )
@@ -96,15 +99,99 @@ func (h *submissionHandler) CreateSubmission(c echo.Context) error {
 }
 
 func (h *submissionHandler) ListSubmission(c echo.Context) error {
-	return nil
+	dataUser, _ := c.Get("user").(*jwt.Token)
+	claims := dataUser.Claims.(*token.JwtCustomClaims)
+
+	userID := uuid.MustParse(claims.ID)
+	submissions, err := h.submissionService.ListSubmission(userID)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, response.ErrorResponse(http.StatusInternalServerError, err.Error()))
+	}
+
+	if len(submissions) == 0 {
+		return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "Submission is empty", nil))
+	}
+
+	data := make([]binder.ListSubmissionResponse, 0)
+	for _, submission := range submissions {
+		data = append(data, binder.ListSubmissionResponse{
+			ID:            submission.ID,
+			EventID:       submission.EventID,
+			UserID:        submission.UserID,
+			TransactionID: submission.TransactionID,
+			Name:          submission.Name,
+			Status:        submission.Status,
+			Type:          submission.Type,
+			Filename:      submission.Filename,
+		})
+	}
+
+	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "List submission", data))
+
 }
 
 func (h *submissionHandler) AcceptSubmission(c echo.Context) error {
-	return nil
+	submissionID := c.Param("id")
+	id, err := uuid.Parse(submissionID)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, "Invalid ID"))
+	}
+
+	submission, err := h.submissionService.FindSubmissionByID(id)
+	if err != nil {
+		return c.JSON(http.StatusNotFound, response.ErrorResponse(http.StatusNotFound, "Submission not found"))
+	}
+
+	if submission.Status == "accepted" {
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, "Submission already accepted"))
+	}
+
+	if submission.Status == "rejected" {
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, "Submission already rejected"))
+	}
+
+	submission.Status = "accepted"
+	_, err = h.submissionService.UpdateSubmission(submission)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, response.ErrorResponse(http.StatusInternalServerError, err.Error()))
+	}
+
+	err = h.submissionService.SendEmailSubmission(submission.Status, submission)
+	if err != nil {
+		fmt.Println("Failed to send email")
+	}
+
+	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "Submission accepted", nil))
 }
 
 func (h *submissionHandler) RejectSubmission(c echo.Context) error {
-	return nil
+	submissionID := c.Param("id")
+	id, err := uuid.Parse(submissionID)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, "Invalid ID"))
+	}
+
+	submission, err := h.submissionService.FindSubmissionByID(id)
+	if err != nil {
+		return c.JSON(http.StatusNotFound, response.ErrorResponse(http.StatusNotFound, "Submission not found"))
+	}
+
+	if submission.Status == "accepted" {
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, "Submission already accepted"))
+	}
+
+	submission.Status = "rejected"
+	_, err = h.submissionService.UpdateSubmission(submission)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, response.ErrorResponse(http.StatusInternalServerError, err.Error()))
+	}
+
+	err = h.submissionService.SendEmailSubmission(submission.Status, submission)
+	if err != nil {
+		fmt.Println("Failed to send email")
+	}
+
+	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "Submission rejected", nil))
 }
 
 func (h *submissionHandler) GetSubmissionByID(c echo.Context) error {

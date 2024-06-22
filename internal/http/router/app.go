@@ -306,12 +306,28 @@ func AppPrivateRoutes(Handler handler.AppHandler) []*route.Route {
 			Handler: notificationHandler.DeleteNotificationByID,
 			Roles:   allRoles,
 		},
-
-		// submission
 		{
 			Method:  http.MethodPost,
 			Path:    "/submission",
 			Handler: submissionHandler.CreateSubmission,
+			Roles:   allRoles,
+		},
+		{
+			Method:  http.MethodGet,
+			Path:    "/submission",
+			Handler: submissionHandler.ListSubmission,
+			Roles:   allRoles,
+		},
+		{
+			Method:  http.MethodPatch,
+			Path:    "/submission/accept/:id",
+			Handler: submissionHandler.AcceptSubmission,
+			Roles:   allRoles,
+		},
+		{
+			Method:  http.MethodPatch,
+			Path:    "/submission/reject/:id",
+			Handler: submissionHandler.RejectSubmission,
 			Roles:   allRoles,
 		},
 	}

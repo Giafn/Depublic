@@ -15,6 +15,7 @@ type submissionRepository struct {
 type SubmissionRepository interface {
 	CreateSubmission(submission *entity.Submission) (*entity.Submission, error)
 	ListSubmission() ([]entity.Submission, error)
+	ListSubmissionByUserID(userID uuid.UUID) ([]entity.Submission, error)
 	FindSubmissionByID(id uuid.UUID) (*entity.Submission, error)
 	UpdateSubmission(submission *entity.Submission) (*entity.Submission, error)
 	FindTransactionByID(id uuid.UUID) (*entity.Transaction, error)
@@ -40,6 +41,16 @@ func (r *submissionRepository) ListSubmission() ([]entity.Submission, error) {
 	var submissions []entity.Submission
 
 	if err := r.db.Find(&submissions).Error; err != nil {
+		return submissions, err
+	}
+
+	return submissions, nil
+}
+
+func (r *submissionRepository) ListSubmissionByUserID(userID uuid.UUID) ([]entity.Submission, error) {
+	var submissions []entity.Submission
+
+	if err := r.db.Where("user_id = ?", userID).Find(&submissions).Error; err != nil {
 		return submissions, err
 	}
 

@@ -160,7 +160,7 @@ func (s *userService) FindAllUser() ([]entity.User, error) {
 				Gender:         v.Profiles.Gender,
 				DateOfBirth:    v.Profiles.DateOfBirth,
 				PhoneNumber:    unEncryptedPhone,
-				ProfilePicture: fmt.Sprintf("%s:%s/app/api/v1/file/%s", s.cfg.Host, s.cfg.Port, v.Profiles.ProfilePicture),
+				ProfilePicture: fmt.Sprintf("http://%s:%s/app/api/v1/file/%s", s.cfg.Host, s.cfg.Port, v.Profiles.ProfilePicture),
 				City:           v.Profiles.City,
 				Province:       v.Profiles.Province,
 			},
@@ -178,7 +178,7 @@ func (s *userService) FindUserByID(id uuid.UUID) (*entity.User, error) {
 	}
 	phoneNumber, _ := s.encryptTool.Decrypt(user.Profiles.PhoneNumber)
 	user.Profiles.PhoneNumber = phoneNumber
-	user.Profiles.ProfilePicture = fmt.Sprintf("%s:%s/app/api/v1/file/%s", s.cfg.Host, s.cfg.Port, user.Profiles.ProfilePicture)
+	user.Profiles.ProfilePicture = fmt.Sprintf("http://%s:%s/app/api/v1/file/%s", s.cfg.Host, s.cfg.Port, user.Profiles.ProfilePicture)
 
 	return user, nil
 }
@@ -335,7 +335,7 @@ func (s *userService) UpdateUser(id uuid.UUID, input *binder.UserUpdateRequest, 
 	updatedUser, err := s.userRepository.UpdateUserWithProfile(user, profile)
 	phoneNumber, _ := s.encryptTool.Decrypt(updatedUser.Profiles.PhoneNumber)
 	updatedUser.Profiles.PhoneNumber = phoneNumber
-	updatedUser.Profiles.ProfilePicture = fmt.Sprintf("%s:%s/app/api/v1/file/%s", s.cfg.Host, s.cfg.Port, updatedUser.Profiles.ProfilePicture)
+	updatedUser.Profiles.ProfilePicture = fmt.Sprintf("http://%s:%s/app/api/v1/file/%s", s.cfg.Host, s.cfg.Port, updatedUser.Profiles.ProfilePicture)
 	if err != nil {
 		upload.DeleteFile(profile.ProfilePicture)
 		return nil, err

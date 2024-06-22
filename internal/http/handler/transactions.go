@@ -64,7 +64,7 @@ func (h *TransactionHandler) CreateTransaction(c echo.Context) error {
 		}))
 	}
 
-	res["payment_url"] = h.maskingPaymentURL(transaction.PaymentURL, transaction.ID)
+	res["payment_url"] = transaction.PaymentURL
 
 	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "Transaction created successfully", res))
 }
@@ -214,14 +214,6 @@ func (h *TransactionHandler) WebhookPayment(c echo.Context) error {
 	return c.String(http.StatusOK, "Webhook received successfully")
 }
 
-func (h *TransactionHandler) maskingPaymentURL(url string, transactionId uuid.UUID) string {
-	encryptedURL, err := h.transactionService.EncryptPaymentURL(url, transactionId)
-	if err != nil {
-		return url
-	}
-	return encryptedURL
-}
-
 func (h *TransactionHandler) PaymentRedirect(c echo.Context) error {
 	payId := c.QueryParam("pay_id")
 	decryptedURL, err := h.transactionService.DecryptPaymentURL(payId)
@@ -229,6 +221,29 @@ func (h *TransactionHandler) PaymentRedirect(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, response.ErrorResponse(http.StatusInternalServerError, err.Error()))
 	}
 	transID := c.QueryParam("transaction_id")
+
+	// check is if submission not uploaded
+	transaction, err := h.transactionService.FindTransactionByID(uuid.MustParse(transID))
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, response.ErrorResponse(http.StatusInternalServerError, err.Error()))
+	}
+
+	event, err := h.transactionService.GetEventByID(transaction.EventID)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, response.ErrorResponse(http.StatusInternalServerError, err.Error()))
+	}
+	if event.MustUploadSubmission {
+		submission, err := h.transactionService.GetSubmissionByTransactionID(uuid.MustParse(transID))
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, response.ErrorResponse(http.StatusInternalServerError, err.Error()))
+		}
+		if submission == nil {
+			return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, "Your Submission not uploaded"))
+		}
+		if submission.Status != "accepted" {
+			return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, "Your Submission not approved"))
+		}
+	}
 
 	isAvaliable, err := h.transactionService.CheckTicketAvailability(uuid.MustParse(transID))
 	if err != nil {
