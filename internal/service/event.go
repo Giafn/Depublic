@@ -22,18 +22,19 @@ type EventService interface {
 }
 
 type eventService struct {
-	eventRepository repository.EventRepository
+	eventRepository   repository.EventRepository
+	pricingRepository repository.PricingRepository
 }
 
-func NewEventService(eventRepo repository.EventRepository) EventService {
-	return &eventService{eventRepo}
+func NewEventService(eventRepo repository.EventRepository, pricingRepo repository.PricingRepository) EventService {
+	return &eventService{eventRepository: eventRepo, pricingRepository: pricingRepo}
 }
 
 func (s *eventService) CreateEvent(event *entity.Event, pricings []entity.Pricing) (*entity.Event, error) {
 	return s.eventRepository.CreateEvent(event, pricings)
 }
 func (s *eventService) CreatePricing(pricing *entity.Pricing) (*entity.Pricing, error) {
-	return s.eventRepository.CreatePricing(pricing)
+	return s.pricingRepository.CreatePricing(pricing)
 }
 
 func (s *eventService) FindEventByID(id uuid.UUID) (*entity.Event, error) {
@@ -45,7 +46,7 @@ func (s *eventService) FindEventByID(id uuid.UUID) (*entity.Event, error) {
 }
 
 func (s *eventService) FindPricingByEventID(id uuid.UUID) ([]entity.Pricing, error) {
-	event, err := s.eventRepository.FindPricingByEventID(id)
+	event, err := s.pricingRepository.FindPricingByEventID(id)
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +72,7 @@ func (s *eventService) UpdateEvent(event *entity.Event) (*entity.Event, error) {
 }
 
 func (s *eventService) UpdatePricing(pricing *entity.Pricing) (*entity.Pricing, error) {
-	return s.eventRepository.UpdatePricing(pricing)
+	return s.pricingRepository.UpdatePricing(pricing)
 }
 
 func (s *eventService) DeleteEvent(eventID uuid.UUID) (bool, error) {
@@ -85,11 +86,11 @@ func (s *eventService) DeleteEvent(eventID uuid.UUID) (bool, error) {
 }
 
 func (s *eventService) DeletePricing(pricingID uuid.UUID) (bool, error) {
-	pricing, err := s.eventRepository.FindPricingByID(pricingID)
+	pricing, err := s.pricingRepository.FindPricingByID(pricingID)
 
 	if err != nil {
 		return false, err
 	}
 
-	return s.eventRepository.DeletePricing(pricing)
+	return s.pricingRepository.DeletePricing(pricing)
 }

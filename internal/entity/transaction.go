@@ -12,6 +12,7 @@ type Transaction struct {
 	TotalAmount    int       `json:"total_amount"`
 	IsPaid         bool      `json:"is_paid" gorm:"default:false"`
 	PaymentURL     string    `json:"payment_url"`
+	Status         string    `json:"status"`
 	Auditable
 }
 
@@ -23,6 +24,7 @@ func NewTransaction(eventID, userID uuid.UUID, ticketQuantity, totalAmount int, 
 		TicketQuantity: ticketQuantity,
 		TotalAmount:    totalAmount,
 		IsPaid:         isPaid,
+		Status:         "pending",
 		Auditable:      NewAuditable(),
 	}
 }

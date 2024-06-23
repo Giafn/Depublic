@@ -9,21 +9,19 @@ import (
 	"gorm.io/gorm"
 )
 
+// submissionRepository
+
 type TransactionRepository interface {
 	CreateTransaction(transaction *entity.Transaction, tickets []entity.Ticket, eventID uuid.UUID, userID uuid.UUID) (*entity.Transaction, error)
 	FindTransactionByID(id uuid.UUID) (*entity.Transaction, error)
 	UpdateTransaction(transaction *entity.Transaction) (*entity.Transaction, error)
 	FindAllTransactions() ([]entity.Transaction, error)
 	DeleteTransaction(id uuid.UUID) error
-	GetPricingByEventID(eventID uuid.UUID, pricingID uuid.UUID) (*entity.Pricing, error)
-	GetUsersById(id uuid.UUID) (*entity.User, error)
-	GetEventByID(id uuid.UUID) (*entity.Event, error)
 	FindTransactionsByUserId(userID uuid.UUID) ([]entity.Transaction, error)
-	FindTicketByTransactionID(transactionID uuid.UUID) ([]entity.Ticket, error)
-	GetPricingById(pricingID uuid.UUID) (*entity.Pricing, error)
-	UpdatePricingRemaining(pricingId uuid.UUID, remaining int) (*entity.Pricing, error)
+	// FindTicketByTransactionID(transactionID uuid.UUID) ([]entity.Ticket, error)
 	FindUnpaidTransactionByUserID(userID uuid.UUID, eventID uuid.UUID) (transId uuid.UUID, err error)
 	GetSubmissionByTransactionID(transactionID uuid.UUID) (*entity.Submission, error)
+	UpdateTransactionStatus(transactionID uuid.UUID, status string) (*entity.Transaction, error)
 }
 
 type transactionRepository struct {
@@ -89,35 +87,6 @@ func (r *transactionRepository) DeleteTransaction(id uuid.UUID) error {
 	return r.db.Delete(&entity.Transaction{}, "id = ?", id).Error
 }
 
-func (r *transactionRepository) GetPricingByEventID(eventID uuid.UUID, pricingID uuid.UUID) (*entity.Pricing, error) {
-	var pricing entity.Pricing
-	if err := r.db.Where("event_id = ?", eventID).
-		Where("pricing_id = ?", pricingID).
-		First(&pricing).Error; err != nil {
-		return nil, errors.New("pricing not found")
-	}
-	return &pricing, nil
-}
-
-func (r *transactionRepository) GetUsersById(id uuid.UUID) (*entity.User, error) {
-	user := new(entity.User)
-	if err := r.db.Preload("Profiles").
-		First(&user, "user_id = ?", id).
-		Error; err != nil {
-		return nil, err
-	}
-	return user, nil
-}
-
-// GetEventByID
-func (r *transactionRepository) GetEventByID(id uuid.UUID) (*entity.Event, error) {
-	var event entity.Event
-	if err := r.db.First(&event, "id = ?", id).Error; err != nil {
-		return nil, err
-	}
-	return &event, nil
-}
-
 func (r *transactionRepository) FindTransactionsByUserId(userID uuid.UUID) ([]entity.Transaction, error) {
 	var transactions []entity.Transaction
 	if err := r.db.Find(&transactions, "user_id = ?", userID).Error; err != nil {
@@ -126,36 +95,13 @@ func (r *transactionRepository) FindTransactionsByUserId(userID uuid.UUID) ([]en
 	return transactions, nil
 }
 
-func (r *transactionRepository) FindTicketByTransactionID(transactionID uuid.UUID) ([]entity.Ticket, error) {
-	var tickets []entity.Ticket
-	if err := r.db.Find(&tickets, "transaction_id = ?", transactionID).Error; err != nil {
-		return nil, err
-	}
-	return tickets, nil
-}
-
-func (r *transactionRepository) GetPricingById(pricingID uuid.UUID) (*entity.Pricing, error) {
-	var pricing entity.Pricing
-	if err := r.db.First(&pricing, "pricing_id = ?", pricingID).Error; err != nil {
-		return nil, err
-	}
-	return &pricing, nil
-}
-
-func (r *transactionRepository) UpdatePricingRemaining(pricingId uuid.UUID, remaining int) (*entity.Pricing, error) {
-	pricing := new(entity.Pricing)
-	if err := r.db.Model(pricing).Where("pricing_id = ?", pricingId).Update("remaining", remaining).Error; err != nil {
-		return nil, err
-	}
-	return pricing, nil
-}
-
 func (r *transactionRepository) FindUnpaidTransactionByUserID(userID uuid.UUID, eventID uuid.UUID) (transId uuid.UUID, err error) {
 	var transaction entity.Transaction
 	transaction.ID = uuid.Nil
 	if err := r.db.Where("user_id = ?", userID).
 		Where("event_id = ?", eventID).
 		Where("is_paid = ?", false).
+		Where("status = ?", "pending").
 		First(&transaction).Error; err != nil {
 		return uuid.Nil, nil
 	}
@@ -172,4 +118,16 @@ func (r *transactionRepository) GetSubmissionByTransactionID(transactionID uuid.
 		return nil, errors.New("please upload your submission")
 	}
 	return &submission, nil
+}
+
+func (r *transactionRepository) UpdateTransactionStatus(transactionID uuid.UUID, status string) (*entity.Transaction, error) {
+	transaction, err := r.FindTransactionByID(transactionID)
+	if err != nil {
+		return nil, err
+	}
+	transaction.Status = status
+	if err := r.db.Save(transaction).Error; err != nil {
+		return nil, err
+	}
+	return transaction, nil
 }

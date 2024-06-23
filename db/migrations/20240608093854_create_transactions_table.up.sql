@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS transactions (
     total_amount INTEGER NOT NULL,
     is_paid BOOLEAN DEFAULT FALSE,
     payment_url TEXT DEFAULT NULL,
+    status VARCHAR(100) DEFAULT 'pending',
     created_at TIMESTAMP DEFAULT now(),
     updated_at TIMESTAMP DEFAULT now(),
     deleted_at TIMESTAMP DEFAULT NULL,

@@ -21,11 +21,9 @@ type notificationService struct {
 	NotificationRepo repository.NotificationRepository
 }
 
-
 func NewNotificationService(notificationRepo repository.NotificationRepository) NotificationService {
 	return &notificationService{NotificationRepo: notificationRepo}
 }
-
 
 func (s *notificationService) FindAllNotification(userID uuid.UUID) ([]entity.Notification, error) {
 	return s.NotificationRepo.FindAllNotification(userID)
@@ -47,15 +45,14 @@ func (s *notificationService) MarkAllNotificationsAsSeen(userID uuid.UUID) ([]en
 	}
 
 	if len(data) == 0 {
-		return nil, errors.New("Tidak ada notifikasi yang sudah dilihat")
+		return nil, errors.New("TIDAK ADA NOTIFIKASI YANG BELUM DILIHAT")
 	}
-
 
 	return s.NotificationRepo.MarkAllNotificationsAsSeen(userID)
 }
 
 func (s *notificationService) DeleteNotification(notificationID uuid.UUID) (bool, error) {
-    notification, err := s.NotificationRepo.FindNotificationByID(notificationID)
+	notification, err := s.NotificationRepo.FindNotificationByID(notificationID)
 
 	if err != nil || notification == nil {
 		return false, err
@@ -72,9 +69,8 @@ func (s *notificationService) DeleteSeenNotification(userID uuid.UUID) (bool, er
 	}
 
 	if len(data) == 0 {
-		return false, errors.New("Tidak ada notifikasi yang sudah dilihat")
+		return false, errors.New("TIDAK ADA NOTIFIKASI YANG BELUM DILIHAT")
 	}
 
 	return s.NotificationRepo.DeleteSeenAllNotification(userID)
 }
-

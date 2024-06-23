@@ -3,7 +3,6 @@ package service
 import (
 	"errors"
 	"fmt"
-	"html"
 	"mime/multipart"
 
 	"github.com/Giafn/Depublic/configs"
@@ -14,8 +13,12 @@ import (
 )
 
 type submissionService struct {
-	submissionRepo repository.SubmissionRepository
-	cfg            *configs.Config
+	submissionRepo   repository.SubmissionRepository
+	transactionRepo  repository.TransactionRepository
+	userRepo         repository.UserRepository
+	eventRepo        repository.EventRepository
+	notificationRepo repository.NotificationRepository
+	cfg              *configs.Config
 }
 
 type SubmissionService interface {
@@ -31,8 +34,21 @@ type SubmissionService interface {
 	SendEmailSubmission(status string, submission *entity.Submission) error
 }
 
-func NewSubmissionService(submissionRepo repository.SubmissionRepository, cfg *configs.Config) SubmissionService {
-	return &submissionService{submissionRepo: submissionRepo, cfg: cfg}
+func NewSubmissionService(
+	submissionRepo repository.SubmissionRepository,
+	transactionRepo repository.TransactionRepository,
+	userRepo repository.UserRepository,
+	eventRepo repository.EventRepository,
+	notificationRepo repository.NotificationRepository,
+	cfg *configs.Config,
+) SubmissionService {
+	return &submissionService{submissionRepo: submissionRepo,
+		transactionRepo:  transactionRepo,
+		userRepo:         userRepo,
+		eventRepo:        eventRepo,
+		notificationRepo: notificationRepo,
+		cfg:              cfg,
+	}
 }
 
 func (s *submissionService) CreateSubmission(submission *entity.Submission) (*entity.Submission, error) {
@@ -40,7 +56,7 @@ func (s *submissionService) CreateSubmission(submission *entity.Submission) (*en
 }
 
 func (s *submissionService) ListSubmission(userId uuid.UUID) ([]entity.Submission, error) {
-	user, err := s.submissionRepo.FindUserByID(userId)
+	user, err := s.userRepo.FindUserByID(userId)
 	if err != nil {
 		return nil, err
 	}
@@ -66,19 +82,30 @@ func (s *submissionService) FindSubmissionByID(id uuid.UUID) (*entity.Submission
 }
 
 func (s *submissionService) UpdateSubmission(submission *entity.Submission) (*entity.Submission, error) {
-	return s.submissionRepo.UpdateSubmission(submission)
+	submission, err := s.submissionRepo.UpdateSubmission(submission)
+	if err != nil {
+		return nil, err
+	}
+
+	if submission.Status == "rejected" {
+		_, err := s.transactionRepo.UpdateTransactionStatus(submission.TransactionID, "rejected")
+		if err != nil {
+			return nil, err
+		}
+	}
+	return submission, nil
 }
 
 func (s *submissionService) FindTransactionByID(id uuid.UUID) (*entity.Transaction, error) {
-	return s.submissionRepo.FindTransactionByID(id)
+	return s.transactionRepo.FindTransactionByID(id)
 }
 
 func (s *submissionService) FindUserByID(id uuid.UUID) (*entity.User, error) {
-	return s.submissionRepo.FindUserByID(id)
+	return s.userRepo.FindUserByID(id)
 }
 
 func (s *submissionService) FindEventByID(id uuid.UUID) (*entity.Event, error) {
-	return s.submissionRepo.FindEventByID(id)
+	return s.eventRepo.FindEventByID(id)
 }
 
 func (s *submissionService) FindSubmissionByTransactionID(id uuid.UUID) (*entity.Submission, error) {
@@ -106,24 +133,29 @@ func (s *submissionService) SendEmailSubmission(status string, submission *entit
 	if err != nil {
 		return err
 	}
-	html := fmt.Sprintf(`
-		<p>Dear %s,</p>
-		<p>Your submission with the name %s has been %s</p>
-		<p>Thank you</p>
-	`, user.Profiles.FullName, html.EscapeString(submission.Name), status)
 
-	if status == "accepted" {
-		html += fmt.Sprintf(`
-			<p>Please pay your Ticket <a href="%s">here</a></p>`,
-			transaction.PaymentURL,
-		)
+	event, err := s.eventRepo.FindEventByID(transaction.EventID)
+	if err != nil {
+		return err
 	}
 
+	html := CreateNotificationApprovalEmailHtml(user.Profiles.FullName, status, event.Name, transaction.PaymentURL)
 	ScheduleEmails(
 		user.Email,
 		"Submission Status",
 		html,
 	)
+
+	notif := &entity.Notification{
+		UserID:  user.UserId,
+		Title:   "Submission Status",
+		Content: fmt.Sprintf("Your submission for %s event has been %s", event.Name, status),
+	}
+
+	_, err = s.notificationRepo.CreateNotification(notif)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
