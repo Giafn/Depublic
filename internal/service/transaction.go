@@ -153,6 +153,7 @@ func (s *transactionService) UpdateTransaction(transaction *entity.Transaction) 
 	existingTransaction.TicketQuantity = transaction.TicketQuantity
 	existingTransaction.TotalAmount = transaction.TotalAmount
 	existingTransaction.IsPaid = transaction.IsPaid
+	existingTransaction.Status = transaction.Status
 
 	updatedTransaction, err := s.transactionRepository.UpdateTransaction(existingTransaction)
 	if err != nil {

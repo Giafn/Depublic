@@ -266,6 +266,11 @@ func (h *TransactionHandler) PaymentRedirect(c echo.Context) error {
 	}
 
 	if !isAvaliable {
+		transaction.Status = "ticket_not_available"
+		_, err = h.transactionService.UpdateTransaction(transaction)
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, response.ErrorResponse(http.StatusInternalServerError, err.Error()))
+		}
 		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, "Ticket is not available"))
 	}
 

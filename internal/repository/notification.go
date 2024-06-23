@@ -7,7 +7,6 @@ import (
 	"gorm.io/gorm"
 )
 
-
 type NotificationRepository interface {
 	FindAllNotification(userID uuid.UUID) ([]entity.Notification, error)
 	FindNotificationByID(notificationID uuid.UUID) (*entity.Notification, error)
@@ -18,14 +17,13 @@ type NotificationRepository interface {
 	DeleteSeenAllNotification(userID uuid.UUID) (bool, error)
 }
 type notificationRepository struct {
-	db *gorm.DB
+	db        *gorm.DB
 	cacheable cache.Cacheable
 }
 
 func NewNotificationRepository(db *gorm.DB, cacheable cache.Cacheable) NotificationRepository {
 	return &notificationRepository{db: db, cacheable: cacheable}
 }
-
 
 func (r *notificationRepository) FindAllNotification(userID uuid.UUID) ([]entity.Notification, error) {
 
@@ -43,10 +41,10 @@ func (r *notificationRepository) FindNotificationByID(notificationID uuid.UUID) 
 
 	err := r.db.Transaction(func(tx *gorm.DB) error {
 		if err := r.db.Where("id = ?", notificationID).Take(notification).Error; err != nil {
-			return  err
+			return err
 		}
-		
-		if notification.IsSeen == false {
+
+		if !notification.IsSeen {
 			if err := r.db.Model(notification).Where("id = ?", notificationID).Update("is_seen", true).Error; err != nil {
 				return err
 			}
@@ -54,7 +52,6 @@ func (r *notificationRepository) FindNotificationByID(notificationID uuid.UUID) 
 
 		return nil
 	})
-
 
 	if err != nil {
 		return nil, err
@@ -73,19 +70,18 @@ func (r *notificationRepository) CreateNotification(notification *entity.Notific
 }
 
 func (r *notificationRepository) MarkAllNotificationsAsSeen(userID uuid.UUID) ([]entity.Notification, error) {
-    
 
 	if err := r.db.Model(&entity.Notification{}).Where("user_id = ?", userID).Update("is_seen", true).Error; err != nil {
 		return nil, err
 	}
 
-	 data,err := r.FindAllNotification(userID)
+	data, err := r.FindAllNotification(userID)
 
-	 if err != nil {
+	if err != nil {
 		return nil, err
-	 }
+	}
 
-	 return data, nil
+	return data, nil
 }
 
 func (r *notificationRepository) DeleteSeenAllNotification(userID uuid.UUID) (bool, error) {

@@ -159,8 +159,21 @@ func (h *TicketHandler) ValidateTicket(c echo.Context) error {
 	id := uuid.MustParse(input.ID)
 
 	oldTicket, err := h.ticketService.FindTicketByID(id)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, err.Error()))
+	}
 	fmt.Println("old ticket")
 	fmt.Println(oldTicket.IsUsed) //false
+
+	// check if ticket transaction is_paid true
+	transaction, err := h.transactionService.FindTransactionByID(uuid.MustParse(oldTicket.TransactionID))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, err.Error()))
+	}
+
+	if !transaction.IsPaid {
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, "transaksi belum dibayar"))
+	}
 
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, err.Error()))
