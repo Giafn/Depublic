@@ -171,6 +171,19 @@ func (h *TransactionHandler) WebhookPayment(c echo.Context) error {
 	transactionStatus := request.TransactionStatus
 	if transactionStatus != "settlement" && transactionStatus != "capture" {
 		fmt.Println("Transaction status not accepted")
+		// update status transaction
+		transaction, err := h.transactionService.FindTransactionByID(transID)
+		if err != nil {
+			fmt.Println("Error finding transaction:", err)
+			return c.String(http.StatusInternalServerError, "Internal Server Error")
+		}
+
+		transaction.Status = transactionStatus
+		_, err = h.transactionService.UpdateTransaction(transaction)
+		if err != nil {
+			fmt.Println("Error updating transaction:", err)
+			return c.String(http.StatusInternalServerError, "Internal Server Error")
+		}
 		return c.String(http.StatusOK, "Webhook received successfully")
 	}
 
@@ -198,6 +211,7 @@ func (h *TransactionHandler) WebhookPayment(c echo.Context) error {
 	}
 
 	transaction.IsPaid = true
+	transaction.Status = "paid"
 	_, err = h.transactionService.UpdateTransaction(transaction)
 
 	if err != nil {
@@ -252,6 +266,11 @@ func (h *TransactionHandler) PaymentRedirect(c echo.Context) error {
 	}
 
 	if !isAvaliable {
+		transaction.Status = "ticket_not_available"
+		_, err = h.transactionService.UpdateTransaction(transaction)
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, response.ErrorResponse(http.StatusInternalServerError, err.Error()))
+		}
 		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, "Ticket is not available"))
 	}
 

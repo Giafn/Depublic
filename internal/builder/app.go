@@ -17,35 +17,53 @@ import (
 func BuildAppPublicRoutes(db *gorm.DB, redisDB *redis.Client, encryptTool encrypt.EncryptTool, tokenUseCase token.TokenUseCase, cfg *configs.Config) []*route.Route {
 	cacheable := cache.NewCacheable(redisDB)
 
-	userRepository := repository.NewUserRepository(db, cacheable)
-	userService := service.NewUserService(userRepository, tokenUseCase, encryptTool, cfg)
-	userHandler := handler.NewUserHandler(userService)
-
-	transactionRepository := repository.NewTransactionRepository(db)
-	transactionService := service.NewTransactionService(transactionRepository, db, encryptTool, cfg)
-	transactionHandler := handler.NewTransactionHandler(transactionService)
-
-	ticketRepository := repository.NewTicketRepository(db)
-	ticketService := service.NewTicketService(ticketRepository)
-	ticketHandler := handler.NewTicketHandler(ticketService, transactionService)
-
 	profileRepository := repository.NewProfileRepository(db, cacheable)
 	profileService := service.NewProfileService(profileRepository, encryptTool)
 	profileHandler := handler.NewProfileHandler(profileService)
 
+	userRepository := repository.NewUserRepository(db, cacheable)
+	userService := service.NewUserService(userRepository, profileRepository, tokenUseCase, encryptTool, cfg)
+	userHandler := handler.NewUserHandler(userService)
+
 	eventRepository := repository.NewEventRepository(db)
-	eventService := service.NewEventService(eventRepository)
+	pricingRepository := repository.NewPricingRepository(db)
+	eventService := service.NewEventService(eventRepository, pricingRepository)
 	eventHandler := handler.NewEventHandler(eventService)
 
 	notificationRepository := repository.NewNotificationRepository(db, cacheable)
 	notificationService := service.NewNotificationService(notificationRepository)
 	notificationHandler := handler.NewNotificationHandler(notificationService)
 
-	appHandler := handler.NewAppHandler(userHandler, transactionHandler, ticketHandler, profileHandler, eventHandler, notificationHandler, nil)
+	ticketRepository := repository.NewTicketRepository(db)
+	transactionRepository := repository.NewTransactionRepository(db)
+
+	ticketService := service.NewTicketService(ticketRepository)
+	transactionService := service.NewTransactionService(
+		transactionRepository,
+		pricingRepository,
+		userRepository,
+		eventRepository,
+		ticketRepository,
+		db,
+		encryptTool,
+		cfg,
+	)
+
+	ticketHandler := handler.NewTicketHandler(ticketService, transactionService)
+	transactionHandler := handler.NewTransactionHandler(transactionService)
+
+	appHandler := handler.NewAppHandler(userHandler,
+		transactionHandler,
+		ticketHandler,
+		profileHandler,
+		eventHandler,
+		notificationHandler,
+		nil,
+	)
 	return router.AppPublicRoutes(appHandler)
 }
 
-func BuildAppPrivateRoutes(db *gorm.DB, redisDB *redis.Client, encryptTool encrypt.EncryptTool, cfg *configs.Config) []*route.Route {
+func BuildAppPrivateRoutes(db *gorm.DB, redisDB *redis.Client, encryptTool encrypt.EncryptTool, tokenUseCase token.TokenUseCase, cfg *configs.Config) []*route.Route {
 	cacheable := cache.NewCacheable(redisDB)
 
 	profileRepository := repository.NewProfileRepository(db, cacheable)
@@ -53,29 +71,47 @@ func BuildAppPrivateRoutes(db *gorm.DB, redisDB *redis.Client, encryptTool encry
 	profileHandler := handler.NewProfileHandler(profileService)
 
 	userRepository := repository.NewUserRepository(db, cacheable)
-	userService := service.NewUserService(userRepository, nil, encryptTool, cfg)
+	userService := service.NewUserService(userRepository, profileRepository, tokenUseCase, encryptTool, cfg)
 	userHandler := handler.NewUserHandler(userService)
 
-	transactionRepository := repository.NewTransactionRepository(db)
-	transactionService := service.NewTransactionService(transactionRepository, db, encryptTool, cfg)
-	transactionHandler := handler.NewTransactionHandler(transactionService)
-
-	ticketRepository := repository.NewTicketRepository(db)
-	ticketService := service.NewTicketService(ticketRepository)
-	ticketHandler := handler.NewTicketHandler(ticketService, transactionService)
-
 	eventRepository := repository.NewEventRepository(db)
-	eventService := service.NewEventService(eventRepository)
+	pricingRepository := repository.NewPricingRepository(db)
+	eventService := service.NewEventService(eventRepository, pricingRepository)
 	eventHandler := handler.NewEventHandler(eventService)
 
 	notificationRepository := repository.NewNotificationRepository(db, cacheable)
 	notificationService := service.NewNotificationService(notificationRepository)
 	notificationHandler := handler.NewNotificationHandler(notificationService)
 
+	ticketRepository := repository.NewTicketRepository(db)
+	transactionRepository := repository.NewTransactionRepository(db)
+
+	ticketService := service.NewTicketService(ticketRepository)
+	transactionService := service.NewTransactionService(
+		transactionRepository,
+		pricingRepository,
+		userRepository,
+		eventRepository,
+		ticketRepository,
+		db,
+		encryptTool,
+		cfg,
+	)
+
+	ticketHandler := handler.NewTicketHandler(ticketService, transactionService)
+	transactionHandler := handler.NewTransactionHandler(transactionService)
+
 	submissionRepository := repository.NewSubmissionRepository(db, cacheable)
-	submissionService := service.NewSubmissionService(submissionRepository, cfg)
+	submissionService := service.NewSubmissionService(submissionRepository, transactionRepository, userRepository, eventRepository, cfg)
 	submissionHandler := handler.NewSubmissionHandler(submissionService)
 
-	appHandler := handler.NewAppHandler(userHandler, transactionHandler, ticketHandler, profileHandler, eventHandler, notificationHandler, submissionHandler)
+	appHandler := handler.NewAppHandler(userHandler,
+		transactionHandler,
+		ticketHandler,
+		profileHandler,
+		eventHandler,
+		notificationHandler,
+		submissionHandler,
+	)
 	return router.AppPrivateRoutes(appHandler)
 }

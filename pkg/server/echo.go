@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"time"
 
 	"github.com/Giafn/Depublic/pkg/response"
@@ -119,14 +120,14 @@ func CheckBaclistToken(tokenUse token.TokenUseCase) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			tokenString := c.Request().Header.Get("Authorization")
-			if len(tokenString) > 7 && tokenString[:7] == "Bearer " {
-				tokenString = tokenString[7:]
+			if tokenString == "" {
+				return c.JSON(http.StatusUnauthorized, response.ErrorResponse(http.StatusUnauthorized, "Authorization header is missing"))
 			}
 
-			// Check if the token is blacklisted
+			tokenString = strings.TrimPrefix(tokenString, "Bearer ")
+
 			if tokenUse.IsTokenBlacklisted(tokenString) {
-				// stop request by setting context to return unauthorized
-				return c.JSON(http.StatusUnauthorized, response.ErrorResponse(http.StatusUnauthorized, "token tidak valid"))
+				return c.JSON(http.StatusUnauthorized, response.ErrorResponse(http.StatusUnauthorized, "Invalid token"))
 			}
 
 			return next(c)

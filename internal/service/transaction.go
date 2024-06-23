@@ -36,17 +36,35 @@ type TransactionService interface {
 
 type transactionService struct {
 	transactionRepository repository.TransactionRepository
+	pricingRepository     repository.PricingRepository
+	userRepository        repository.UserRepository
+	eventRepository       repository.EventRepository
+	ticketRepository      repository.TicketRepository
 	db                    *gorm.DB
 	encryptTool           encrypt.EncryptTool
 	cfg                   *configs.Config
 }
 
-func NewTransactionService(transactionRepository repository.TransactionRepository,
+func NewTransactionService(
+	transactionRepository repository.TransactionRepository,
+	pricingRepository repository.PricingRepository,
+	userRepository repository.UserRepository,
+	eventRepository repository.EventRepository,
+	ticketRepository repository.TicketRepository,
 	db *gorm.DB,
 	encryptTool encrypt.EncryptTool,
 	cfg *configs.Config,
 ) TransactionService {
-	return &transactionService{transactionRepository: transactionRepository, db: db, encryptTool: encryptTool, cfg: cfg}
+	return &transactionService{
+		transactionRepository: transactionRepository,
+		pricingRepository:     pricingRepository,
+		userRepository:        userRepository,
+		eventRepository:       eventRepository,
+		ticketRepository:      ticketRepository,
+		db:                    db,
+		encryptTool:           encryptTool,
+		cfg:                   cfg,
+	}
 }
 
 func (s *transactionService) CreateTransaction(
@@ -67,7 +85,7 @@ func (s *transactionService) CreateTransaction(
 	ticketQuantity := len(tickets)
 
 	for _, ticket := range tickets {
-		pricing, err := s.transactionRepository.GetPricingByEventID(eventID, ticket.PricingId)
+		pricing, err := s.pricingRepository.GetPricingByEventID(eventID, ticket.PricingId)
 		if err != nil {
 			return nil, false, err
 		}
@@ -84,7 +102,7 @@ func (s *transactionService) CreateTransaction(
 		entityTicket := entity.NewTicket("", eventID.String(), ticket.BuyerName, ticket.PricingId.String())
 		entityTickets = append(entityTickets, *entityTicket)
 	}
-	user, err := s.transactionRepository.GetUsersById(userID)
+	user, err := s.userRepository.FindUserByID(userID)
 	if err != nil {
 		return nil, false, err
 	}
@@ -135,6 +153,7 @@ func (s *transactionService) UpdateTransaction(transaction *entity.Transaction) 
 	existingTransaction.TicketQuantity = transaction.TicketQuantity
 	existingTransaction.TotalAmount = transaction.TotalAmount
 	existingTransaction.IsPaid = transaction.IsPaid
+	existingTransaction.Status = transaction.Status
 
 	updatedTransaction, err := s.transactionRepository.UpdateTransaction(existingTransaction)
 	if err != nil {
@@ -158,7 +177,7 @@ func (s *transactionService) DeleteTransaction(id uuid.UUID) error {
 func (s *transactionService) CountAmountTickets(tickets []binder.Ticket, eventID uuid.UUID) (int, error) {
 	var totalAmount int
 	for _, ticket := range tickets {
-		pricing, err := s.transactionRepository.GetPricingByEventID(eventID, ticket.PricingId)
+		pricing, err := s.pricingRepository.GetPricingByEventID(eventID, ticket.PricingId)
 		if err != nil {
 			return 0, err
 		}
@@ -198,7 +217,7 @@ func (s *transactionService) requestPayment(transaction *entity.Transaction, use
 }
 
 func (s *transactionService) checkEventSubmission(eventID uuid.UUID) (bool, error) {
-	event, err := s.transactionRepository.GetEventByID(eventID)
+	event, err := s.eventRepository.FindEventByID(eventID)
 	fmt.Println(event)
 	if err != nil {
 		return false, err
@@ -212,7 +231,7 @@ func (s *transactionService) checkEventSubmission(eventID uuid.UUID) (bool, erro
 }
 
 func (s *transactionService) GetUsersById(id uuid.UUID) (*entity.User, error) {
-	user, err := s.transactionRepository.GetUsersById(id)
+	user, err := s.userRepository.FindUserByID(id)
 	if err != nil {
 		return nil, err
 	}
@@ -252,13 +271,13 @@ func (s *transactionService) CheckTicketAvailability(transactionID uuid.UUID) (b
 		return false, errors.New("transaction already paid")
 	}
 
-	ticket, err := s.transactionRepository.FindTicketByTransactionID(transactionID)
+	tickets, err := s.ticketRepository.FindTicketsByTransactionId(transactionID)
 	if err != nil {
 		return false, err
 	}
 
-	for _, t := range ticket {
-		pricing, err := s.transactionRepository.GetPricingById(uuid.MustParse(t.PricingID))
+	for _, t := range tickets {
+		pricing, err := s.pricingRepository.FindPricingByID(uuid.MustParse(t.PricingID))
 		if err != nil {
 			return false, err
 		}
@@ -273,14 +292,14 @@ func (s *transactionService) CheckTicketAvailability(transactionID uuid.UUID) (b
 
 func (s *transactionService) UpdateTicketRemaining(tickets []entity.Ticket) error {
 	for _, ticket := range tickets {
-		pricing, err := s.transactionRepository.GetPricingById(uuid.MustParse(ticket.PricingID))
+		pricing, err := s.pricingRepository.FindPricingByID(uuid.MustParse(ticket.PricingID))
 		if err != nil {
 			return err
 		}
 
 		pricing.Remaining -= 1
 
-		_, err = s.transactionRepository.UpdatePricingRemaining(pricing.PricingId, pricing.Remaining)
+		_, err = s.pricingRepository.UpdatePricingRemaining(pricing.PricingId, pricing.Remaining)
 		if err != nil {
 			return err
 		}
@@ -290,7 +309,7 @@ func (s *transactionService) UpdateTicketRemaining(tickets []entity.Ticket) erro
 }
 
 func (s *transactionService) GetTicketsByTransactionID(transactionID uuid.UUID) ([]entity.Ticket, error) {
-	tickets, err := s.transactionRepository.FindTicketByTransactionID(transactionID)
+	tickets, err := s.ticketRepository.FindTicketsByTransactionId(transactionID)
 	if err != nil {
 		return nil, err
 	}
@@ -306,7 +325,7 @@ func (h *transactionService) maskingPaymentURL(url string, transactionId uuid.UU
 }
 
 func (s *transactionService) GetEventByID(id uuid.UUID) (*entity.Event, error) {
-	event, err := s.transactionRepository.GetEventByID(id)
+	event, err := s.eventRepository.FindEventByID(id)
 	if err != nil {
 		return nil, err
 	}

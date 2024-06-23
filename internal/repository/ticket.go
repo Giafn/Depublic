@@ -21,7 +21,7 @@ type TicketRepository interface {
 	FindTicketsByTransactionId(transactionId uuid.UUID) ([]entity.Ticket, error)
 	FindTicketsByUser(userId uuid.UUID) ([]entity.Ticket, error)
 }
-	
+
 type ticketRepository struct {
 	db *gorm.DB
 }
@@ -71,7 +71,7 @@ func (r *ticketRepository) ValidateTicket(ticket *entity.Ticket) (*entity.Ticket
 	if ticket.IsUsed {
 		return ticket, ErrTicketAlreadyValidated
 	}
-	
+
 	fields := make(map[string]interface{})
 
 	fields["is_used"] = true
@@ -133,19 +133,19 @@ func (r *ticketRepository) FindAllTickets() ([]entity.Ticket, error) {
 
 func (r *ticketRepository) FindTicketsByTransactionId(transactionId uuid.UUID) ([]entity.Ticket, error) {
 	var tickets []entity.Ticket
-    result := r.db.Where("id_transaction = ?", transactionId).Find(&tickets)
-    if result.Error != nil {
-        return nil, result.Error
-    }
-    return tickets, nil
+	result := r.db.Where("transaction_id = ?", transactionId).Find(&tickets)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return tickets, nil
 }
 
 func (r *ticketRepository) FindTicketsByUser(userId uuid.UUID) ([]entity.Ticket, error) {
 	var tickets []entity.Ticket
-    result := r.db.Joins("JOIN transactions ON transactions.id = tickets.transaction_id").
-        Where("transactions.user_id = ?", userId).Find(&tickets)
-    if result.Error != nil {
-        return nil, result.Error
-    }
-    return tickets, nil
+	result := r.db.Joins("JOIN transactions ON transactions.id = tickets.transaction_id").
+		Where("transactions.user_id = ?", userId).Find(&tickets)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return tickets, nil
 }

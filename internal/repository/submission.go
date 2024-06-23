@@ -18,9 +18,6 @@ type SubmissionRepository interface {
 	ListSubmissionByUserID(userID uuid.UUID) ([]entity.Submission, error)
 	FindSubmissionByID(id uuid.UUID) (*entity.Submission, error)
 	UpdateSubmission(submission *entity.Submission) (*entity.Submission, error)
-	FindTransactionByID(id uuid.UUID) (*entity.Transaction, error)
-	FindUserByID(id uuid.UUID) (*entity.User, error)
-	FindEventByID(id uuid.UUID) (*entity.Event, error)
 	FindSubmissionByTransactionID(id uuid.UUID) (*entity.Submission, error)
 }
 
@@ -74,37 +71,6 @@ func (r *submissionRepository) UpdateSubmission(submission *entity.Submission) (
 	}
 
 	return submission, nil
-}
-
-func (r *submissionRepository) FindTransactionByID(id uuid.UUID) (*entity.Transaction, error) {
-	var transaction entity.Transaction
-
-	if err := r.db.First(&transaction, id).Error; err != nil {
-		return &transaction, err
-	}
-
-	return &transaction, nil
-}
-
-func (r *submissionRepository) FindUserByID(id uuid.UUID) (*entity.User, error) {
-	var user entity.User
-
-	if err := r.db.Preload("Profiles").
-		First(&user, id).Error; err != nil {
-		return &user, err
-	}
-
-	return &user, nil
-}
-
-func (r *submissionRepository) FindEventByID(id uuid.UUID) (*entity.Event, error) {
-	var event entity.Event
-
-	if err := r.db.First(&event, id).Error; err != nil {
-		return &event, err
-	}
-
-	return &event, nil
 }
 
 func (r *submissionRepository) FindSubmissionByTransactionID(id uuid.UUID) (*entity.Submission, error) {

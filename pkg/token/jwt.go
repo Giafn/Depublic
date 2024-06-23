@@ -83,7 +83,6 @@ func (t *tokenUseCase) InvalidateToken(tokenString string) error {
 		return err
 	}
 
-	// Add token to blacklist
 	t.blacklist[tokenString] = true
 	return nil
 }

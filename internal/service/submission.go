@@ -13,8 +13,11 @@ import (
 )
 
 type submissionService struct {
-	submissionRepo repository.SubmissionRepository
-	cfg            *configs.Config
+	submissionRepo  repository.SubmissionRepository
+	transactionRepo repository.TransactionRepository
+	userRepo        repository.UserRepository
+	eventRepo       repository.EventRepository
+	cfg             *configs.Config
 }
 
 type SubmissionService interface {
@@ -30,8 +33,19 @@ type SubmissionService interface {
 	SendEmailSubmission(status string, submission *entity.Submission) error
 }
 
-func NewSubmissionService(submissionRepo repository.SubmissionRepository, cfg *configs.Config) SubmissionService {
-	return &submissionService{submissionRepo: submissionRepo, cfg: cfg}
+func NewSubmissionService(
+	submissionRepo repository.SubmissionRepository,
+	transactionRepo repository.TransactionRepository,
+	userRepo repository.UserRepository,
+	eventRepo repository.EventRepository,
+	cfg *configs.Config,
+) SubmissionService {
+	return &submissionService{submissionRepo: submissionRepo,
+		transactionRepo: transactionRepo,
+		userRepo:        userRepo,
+		cfg:             cfg,
+		eventRepo:       eventRepo,
+	}
 }
 
 func (s *submissionService) CreateSubmission(submission *entity.Submission) (*entity.Submission, error) {
@@ -39,7 +53,7 @@ func (s *submissionService) CreateSubmission(submission *entity.Submission) (*en
 }
 
 func (s *submissionService) ListSubmission(userId uuid.UUID) ([]entity.Submission, error) {
-	user, err := s.submissionRepo.FindUserByID(userId)
+	user, err := s.userRepo.FindUserByID(userId)
 	if err != nil {
 		return nil, err
 	}
@@ -65,19 +79,30 @@ func (s *submissionService) FindSubmissionByID(id uuid.UUID) (*entity.Submission
 }
 
 func (s *submissionService) UpdateSubmission(submission *entity.Submission) (*entity.Submission, error) {
-	return s.submissionRepo.UpdateSubmission(submission)
+	submission, err := s.submissionRepo.UpdateSubmission(submission)
+	if err != nil {
+		return nil, err
+	}
+
+	if submission.Status == "rejected" {
+		_, err := s.transactionRepo.UpdateTransactionStatus(submission.TransactionID, "rejected")
+		if err != nil {
+			return nil, err
+		}
+	}
+	return submission, nil
 }
 
 func (s *submissionService) FindTransactionByID(id uuid.UUID) (*entity.Transaction, error) {
-	return s.submissionRepo.FindTransactionByID(id)
+	return s.transactionRepo.FindTransactionByID(id)
 }
 
 func (s *submissionService) FindUserByID(id uuid.UUID) (*entity.User, error) {
-	return s.submissionRepo.FindUserByID(id)
+	return s.userRepo.FindUserByID(id)
 }
 
 func (s *submissionService) FindEventByID(id uuid.UUID) (*entity.Event, error) {
-	return s.submissionRepo.FindEventByID(id)
+	return s.eventRepo.FindEventByID(id)
 }
 
 func (s *submissionService) FindSubmissionByTransactionID(id uuid.UUID) (*entity.Submission, error) {
@@ -106,7 +131,7 @@ func (s *submissionService) SendEmailSubmission(status string, submission *entit
 		return err
 	}
 
-	event, err := s.submissionRepo.FindEventByID(transaction.EventID)
+	event, err := s.eventRepo.FindEventByID(transaction.EventID)
 	if err != nil {
 		return err
 	}
