@@ -175,10 +175,6 @@ func (h *TicketHandler) ValidateTicket(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, "transaksi belum dibayar"))
 	}
 
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, err.Error()))
-	}
-
 	validatedTicket, err := h.ticketService.ValidateTicket(oldTicket)
 
 	if err != nil {

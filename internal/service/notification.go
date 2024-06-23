@@ -45,7 +45,7 @@ func (s *notificationService) MarkAllNotificationsAsSeen(userID uuid.UUID) ([]en
 	}
 
 	if len(data) == 0 {
-		return nil, errors.New("Tidak ada notifikasi yang sudah dilihat")
+		return nil, errors.New("TIDAK ADA NOTIFIKASI YANG BELUM DILIHAT")
 	}
 
 	return s.NotificationRepo.MarkAllNotificationsAsSeen(userID)
@@ -69,7 +69,7 @@ func (s *notificationService) DeleteSeenNotification(userID uuid.UUID) (bool, er
 	}
 
 	if len(data) == 0 {
-		return false, errors.New("Tidak ada notifikasi yang sudah dilihat")
+		return false, errors.New("TIDAK ADA NOTIFIKASI YANG BELUM DILIHAT")
 	}
 
 	return s.NotificationRepo.DeleteSeenAllNotification(userID)

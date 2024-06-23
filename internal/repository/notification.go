@@ -61,7 +61,7 @@ func (r *notificationRepository) FindNotificationByID(notificationID uuid.UUID) 
 }
 
 func (r *notificationRepository) CreateNotification(notification *entity.Notification) (*entity.Notification, error) {
-
+	notification.ID = uuid.New()
 	if err := r.db.Create(notification).Error; err != nil {
 		return nil, err
 	}

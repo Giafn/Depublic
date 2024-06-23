@@ -13,11 +13,12 @@ import (
 )
 
 type submissionService struct {
-	submissionRepo  repository.SubmissionRepository
-	transactionRepo repository.TransactionRepository
-	userRepo        repository.UserRepository
-	eventRepo       repository.EventRepository
-	cfg             *configs.Config
+	submissionRepo   repository.SubmissionRepository
+	transactionRepo  repository.TransactionRepository
+	userRepo         repository.UserRepository
+	eventRepo        repository.EventRepository
+	notificationRepo repository.NotificationRepository
+	cfg              *configs.Config
 }
 
 type SubmissionService interface {
@@ -38,13 +39,15 @@ func NewSubmissionService(
 	transactionRepo repository.TransactionRepository,
 	userRepo repository.UserRepository,
 	eventRepo repository.EventRepository,
+	notificationRepo repository.NotificationRepository,
 	cfg *configs.Config,
 ) SubmissionService {
 	return &submissionService{submissionRepo: submissionRepo,
-		transactionRepo: transactionRepo,
-		userRepo:        userRepo,
-		cfg:             cfg,
-		eventRepo:       eventRepo,
+		transactionRepo:  transactionRepo,
+		userRepo:         userRepo,
+		eventRepo:        eventRepo,
+		notificationRepo: notificationRepo,
+		cfg:              cfg,
 	}
 }
 
@@ -142,6 +145,17 @@ func (s *submissionService) SendEmailSubmission(status string, submission *entit
 		"Submission Status",
 		html,
 	)
+
+	notif := &entity.Notification{
+		UserID:  user.UserId,
+		Title:   "Submission Status",
+		Content: fmt.Sprintf("Your submission for %s event has been %s", event.Name, status),
+	}
+
+	_, err = s.notificationRepo.CreateNotification(notif)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

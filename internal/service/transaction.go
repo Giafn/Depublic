@@ -32,17 +32,19 @@ type TransactionService interface {
 	GetTicketsByTransactionID(transactionID uuid.UUID) ([]entity.Ticket, error)
 	GetEventByID(id uuid.UUID) (*entity.Event, error)
 	GetSubmissionByTransactionID(transactionID uuid.UUID) (*entity.Submission, error)
+	CreateNotification(notification *entity.Notification) (*entity.Notification, error)
 }
 
 type transactionService struct {
-	transactionRepository repository.TransactionRepository
-	pricingRepository     repository.PricingRepository
-	userRepository        repository.UserRepository
-	eventRepository       repository.EventRepository
-	ticketRepository      repository.TicketRepository
-	db                    *gorm.DB
-	encryptTool           encrypt.EncryptTool
-	cfg                   *configs.Config
+	transactionRepository  repository.TransactionRepository
+	pricingRepository      repository.PricingRepository
+	userRepository         repository.UserRepository
+	eventRepository        repository.EventRepository
+	ticketRepository       repository.TicketRepository
+	notificationRepository repository.NotificationRepository
+	db                     *gorm.DB
+	encryptTool            encrypt.EncryptTool
+	cfg                    *configs.Config
 }
 
 func NewTransactionService(
@@ -51,19 +53,21 @@ func NewTransactionService(
 	userRepository repository.UserRepository,
 	eventRepository repository.EventRepository,
 	ticketRepository repository.TicketRepository,
+	notificationRepository repository.NotificationRepository,
 	db *gorm.DB,
 	encryptTool encrypt.EncryptTool,
 	cfg *configs.Config,
 ) TransactionService {
 	return &transactionService{
-		transactionRepository: transactionRepository,
-		pricingRepository:     pricingRepository,
-		userRepository:        userRepository,
-		eventRepository:       eventRepository,
-		ticketRepository:      ticketRepository,
-		db:                    db,
-		encryptTool:           encryptTool,
-		cfg:                   cfg,
+		transactionRepository:  transactionRepository,
+		pricingRepository:      pricingRepository,
+		userRepository:         userRepository,
+		eventRepository:        eventRepository,
+		ticketRepository:       ticketRepository,
+		notificationRepository: notificationRepository,
+		db:                     db,
+		encryptTool:            encryptTool,
+		cfg:                    cfg,
 	}
 }
 
@@ -338,4 +342,12 @@ func (s *transactionService) GetSubmissionByTransactionID(transactionID uuid.UUI
 		return nil, err
 	}
 	return submission, nil
+}
+
+func (s *transactionService) CreateNotification(notification *entity.Notification) (*entity.Notification, error) {
+	notification, err := s.notificationRepository.CreateNotification(notification)
+	if err != nil {
+		return nil, err
+	}
+	return notification, nil
 }

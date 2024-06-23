@@ -168,29 +168,52 @@ func (h *TransactionHandler) WebhookPayment(c echo.Context) error {
 	}
 	transID, _ := uuid.Parse(request.OrderID)
 
+	transaction, err := h.transactionService.FindTransactionByID(transID)
+	if err != nil {
+		fmt.Println("Error finding transaction:", err)
+		return c.String(http.StatusInternalServerError, "Internal Server Error")
+	}
+	user, err := h.transactionService.GetUsersById(transaction.UserID)
+	if err != nil {
+		fmt.Println("Error finding user:", err)
+		return c.String(http.StatusInternalServerError, "Internal Server Error")
+	}
+
 	transactionStatus := request.TransactionStatus
 	if transactionStatus != "settlement" && transactionStatus != "capture" {
 		fmt.Println("Transaction status not accepted")
-		// update status transaction
-		transaction, err := h.transactionService.FindTransactionByID(transID)
-		if err != nil {
-			fmt.Println("Error finding transaction:", err)
-			return c.String(http.StatusInternalServerError, "Internal Server Error")
-		}
 
 		transaction.Status = transactionStatus
+		if transactionStatus == "pending" {
+			transaction.Status = "pending_or_expired"
+		}
 		_, err = h.transactionService.UpdateTransaction(transaction)
 		if err != nil {
 			fmt.Println("Error updating transaction:", err)
 			return c.String(http.StatusInternalServerError, "Internal Server Error")
 		}
-		return c.String(http.StatusOK, "Webhook received successfully")
-	}
+		if transactionStatus != "pending" {
+			html := service.CreateSuccessPaymentEmailHtml(user.Profiles.FullName, transaction.Status, transaction.TotalAmount, transaction.ID.String())
+			service.ScheduleEmails(
+				user.Email,
+				"Payment Failed",
+				html,
+			)
 
-	transaction, err := h.transactionService.FindTransactionByID(transID)
-	if err != nil {
-		fmt.Println("Error finding transaction:", err)
-		return c.String(http.StatusInternalServerError, "Internal Server Error")
+			notif := entity.Notification{
+				UserID:  transaction.UserID,
+				Title:   "Payment Failed",
+				Content: fmt.Sprintf("Your payment for transaction %s has been failed", transaction.ID.String()),
+			}
+
+			_, err = h.transactionService.CreateNotification(&notif)
+			if err != nil {
+				fmt.Println("Error creating notification:", err)
+				return c.String(http.StatusInternalServerError, "Internal Server Error")
+			}
+		}
+
+		return c.String(http.StatusOK, "Webhook received successfully")
 	}
 
 	if transaction.IsPaid {
@@ -218,13 +241,25 @@ func (h *TransactionHandler) WebhookPayment(c echo.Context) error {
 		fmt.Println("Error updating transaction:", err)
 		return c.String(http.StatusInternalServerError, "Internal Server Error")
 	}
-	user, _ := h.transactionService.GetUsersById(transaction.UserID)
+
 	html := service.CreateSuccessPaymentEmailHtml(user.Profiles.FullName, "accepted", transaction.TotalAmount, transaction.ID.String())
 	service.ScheduleEmails(
 		user.Email,
 		"Payment Confirmation",
 		html,
 	)
+
+	notif := entity.Notification{
+		UserID:  transaction.UserID,
+		Title:   "Payment Confirmation",
+		Content: fmt.Sprintf("Your payment for transaction %s has been confirmed", transaction.ID.String()),
+	}
+
+	_, err = h.transactionService.CreateNotification(&notif)
+	if err != nil {
+		fmt.Println("Error creating notification:", err)
+		return c.String(http.StatusInternalServerError, "Internal Server Error")
+	}
 
 	return c.String(http.StatusOK, "Webhook received successfully")
 }
