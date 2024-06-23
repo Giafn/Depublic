@@ -3,7 +3,6 @@ package service
 import (
 	"errors"
 	"fmt"
-	"html"
 	"mime/multipart"
 
 	"github.com/Giafn/Depublic/configs"
@@ -106,19 +105,13 @@ func (s *submissionService) SendEmailSubmission(status string, submission *entit
 	if err != nil {
 		return err
 	}
-	html := fmt.Sprintf(`
-		<p>Dear %s,</p>
-		<p>Your submission with the name %s has been %s</p>
-		<p>Thank you</p>
-	`, user.Profiles.FullName, html.EscapeString(submission.Name), status)
 
-	if status == "accepted" {
-		html += fmt.Sprintf(`
-			<p>Please pay your Ticket <a href="%s">here</a></p>`,
-			transaction.PaymentURL,
-		)
+	event, err := s.submissionRepo.FindEventByID(transaction.EventID)
+	if err != nil {
+		return err
 	}
 
+	html := CreateNotificationApprovalEmailHtml(user.Profiles.FullName, status, event.Name, transaction.PaymentURL)
 	ScheduleEmails(
 		user.Email,
 		"Submission Status",

@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"strconv"
 	"time"
 
@@ -228,6 +229,129 @@ func CreateSuccessPaymentEmailHtml(userName string, status string, amont int, tr
 				</tr>
 			</table>
 		</body>
+	</html>`
+
+	return html
+}
+
+func CreateNotificationApprovalEmailHtml(userName string, status string, eventName string, payUrl string) string {
+	icon := "https://cdn-icons-png.flaticon.com/512/8072/8072913.png"
+	btnPay := ""
+	if status == "accepted" {
+		icon = "https://cdn-icons-png.flaticon.com/512/8622/8622624.png"
+		btnPay = fmt.Sprintf(`<a href="%s" class="btn btn-primary">Pay Ticket</a>`, payUrl)
+	}
+	eventName = eventName[:1] + eventName[1:]
+
+	html := `<!DOCTYPE html>
+	<html>
+	<head>
+	<title>Page Title</title>
+	<style>
+		@import url('https://fonts.googleapis.com/css?family=Roboto');
+		@font-face {
+			font-family: 'bariolregular';
+			src: url('https://res.cloudinary.com/dw1zug8d6/raw/upload/v1541747126/fonts/bariol/bariol_regular-webfont.eot'),
+				 url('https://res.cloudinary.com/dw1zug8d6/raw/upload/v1541747224/fonts/bariol/bariol_regular-webfont.woff2') format('woff2'),
+				 url('https://res.cloudinary.com/dw1zug8d6/raw/upload/v1541747128/fonts/bariol/bariol_regular-webfont.woff') format('woff'),
+				 url('https://res.cloudinary.com/dw1zug8d6/raw/upload/v1541747127/fonts/bariol/bariol_regular-webfont.ttf') format('truetype');
+			font-weight: normal;
+			font-style: normal;
+		}
+		
+		body {
+			align-items: center;
+			justify-content: center;
+			background-color: #f5f6fa;
+			display: flex;
+			height:720px;
+		}
+	
+		.payment-success {
+			width: 410px;
+			box-shadow: 0 13px 45px 0 rgba(51, 59, 69, 0.1);
+			margin: auto;
+			border-radius: 10px;
+			text-align: center;
+			position: relative;
+			font-family: 'Roboto', sans-serif;
+		}
+	
+		.payment-success .header {
+			position: relative;
+			height: 7px;
+		}
+	
+		.payment-success .body {
+			padding: 0 50px;
+			padding-bottom: 25px;
+		}
+	
+		.payment-success .close {
+			position: absolute;
+			color: #0073ff;
+			font-size: 20px;
+			right: 15px;
+			top: 11px;
+			cursor: pointer;
+		}
+	
+		.payment-success .title {
+			font-family: 'bariolregular';
+			font-size: 32px;
+			color: #54617a;
+			font-weight: normal;
+			margin-bottom: 10px;
+		}
+	
+		.payment-success .main-img {
+			width: 243px;
+		}
+	
+		.payment-success p {
+			font-size: 13px;
+			color: #607d8b;
+		}
+	
+		.payment-success .btn {
+			border: none;
+			border-radius: 10px;
+			width: 100%;
+			height: 40px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			margin: 20px 0;
+			outline: none;
+			cursor: pointer;
+			position: relative;
+		}
+	
+		.payment-success .btn.btn-primary {
+			background: #0073ff;
+			color: #fff;
+		}
+	
+		.payment-success .cancel {
+			text-decoration: none;
+			font-size: 14px;
+			color: #607d8b;
+		}
+	</style>
+	</head>
+	<body>
+	<div class="payment-success"  style="background-color: white;">
+		<div class="header">
+			<i class="ion-close-round close"></i>
+		</div>
+		<div class="body">
+			<h2 class="title">Submission ` + status + `</h2>
+			<img class="main-img" src="` + icon + `" alt="">
+			<p>Your submission to buy ticket <b>` + eventName + `</b> event, was reviewed and ` + status + ` by admin!</p>
+			` + btnPay + `
+		</div>
+	</div>
+	</body>
 	</html>`
 
 	return html
