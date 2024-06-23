@@ -23,7 +23,7 @@ type UserService interface {
 	RegisterUser(user *binder.UserRegisterRequest, file *multipart.FileHeader) (*entity.User, error)
 	CreateUser(user *binder.UserCreateRequest, file *multipart.FileHeader) (*entity.User, error)
 	UpdateUser(id uuid.UUID, user *binder.UserUpdateRequest, file *multipart.FileHeader) (*entity.User, error)
-	FindAllUser() ([]entity.User, error)
+	FindAllUser(page, limit int) ([]entity.User, int, error)
 	FindUserByID(id uuid.UUID) (*entity.User, error)
 	VerifyEmail(id uuid.UUID) error
 	ResendEmailVerification(email string) error
@@ -144,10 +144,10 @@ func (s *userService) RegisterUser(input *binder.UserRegisterRequest, file *mult
 	return newUser, nil
 }
 
-func (s *userService) FindAllUser() ([]entity.User, error) {
-	users, err := s.userRepository.FindAllUser()
+func (s *userService) FindAllUser(page, limit int) ([]entity.User, int, error) {
+	users, count, err := s.userRepository.FindAllUser(page, limit)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
 	formattedUser := make([]entity.User, 0)
@@ -171,7 +171,7 @@ func (s *userService) FindAllUser() ([]entity.User, error) {
 		})
 	}
 
-	return formattedUser, nil
+	return formattedUser, count, nil
 }
 
 func (s *userService) FindUserByID(id uuid.UUID) (*entity.User, error) {

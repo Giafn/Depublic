@@ -233,8 +233,12 @@ func (h *TicketHandler) FindTicketsByTransactionId(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, err.Error()))
 	}
+	dataUser, _ := c.Get("user").(*jwt.Token)
+	claims := dataUser.Claims.(*token.JwtCustomClaims)
 
-	tickets, err := h.ticketService.FindTicketsByTransactionId(transactionId)
+	userID := uuid.MustParse(claims.ID)
+
+	tickets, err := h.ticketService.FindTicketsByTransactionId(transactionId, userID)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, response.ErrorResponse(http.StatusInternalServerError, err.Error()))
 	}

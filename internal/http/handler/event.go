@@ -2,11 +2,13 @@ package handler
 
 import (
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/Giafn/Depublic/internal/entity"
 	"github.com/Giafn/Depublic/internal/http/binder"
 	"github.com/Giafn/Depublic/internal/service"
+	pkg "github.com/Giafn/Depublic/pkg/pagination"
 	"github.com/Giafn/Depublic/pkg/response"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
@@ -125,11 +127,13 @@ func (h *EventHandler) FindPricingByEventID(c echo.Context) error {
 
 func (h *EventHandler) GetEvents(c echo.Context) error {
 	allowedParams := map[string]bool{
-		"price":    true,
-		"province": true,
+		"price":     true,
+		"province":  true,
 		"timeStart": true,
-		"category": true,
-		"sort":     true,
+		"category":  true,
+		"sort":      true,
+		"page":      true,
+		"limit":     true,
 	}
 
 	allowedSorts := map[string]bool{
@@ -140,22 +144,22 @@ func (h *EventHandler) GetEvents(c echo.Context) error {
 	}
 
 	allowedTime := map[string]bool{
-		"day":true,
+		"day":   true,
 		"night": true,
 	}
 
 	allowedCategory := map[string]bool{
-		"withSubmission":true,
+		"withSubmission":    true,
 		"withoutSubmission": true,
 	}
 
 	allowedPrice := map[string]bool{
-		"0":true,
-		"<100000":true,
-		"<500000":true,
-		"<1000000":true,
-		"<2500000":true,
-		">5000000":true,
+		"0":        true,
+		"<100000":  true,
+		"<500000":  true,
+		"<1000000": true,
+		"<2500000": true,
+		">5000000": true,
 	}
 
 	for key := range c.QueryParams() {
@@ -205,18 +209,32 @@ func (h *EventHandler) GetEvents(c echo.Context) error {
 		if err := c.Bind(&input); err != nil {
 			return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, "Kesalahan Input"))
 		}
-	
+
 		if errorMessage, data := checkValidation(input); errorMessage != "" {
 			return c.JSON(http.StatusBadRequest, response.SuccessResponse(http.StatusBadRequest, errorMessage, data))
 		}
 
-		distance = map[string]float64 {
-			"latitude" : input.Latitude,
-			"longitude" : input.Longitude,
+		distance = map[string]float64{
+			"latitude":  input.Latitude,
+			"longitude": input.Longitude,
 		}
 	}
 
-	events, err := h.eventService.GetEvents(filter, sort, distance)
+	page, _ := strconv.Atoi(c.QueryParam("page"))
+	limit, _ := strconv.Atoi(c.QueryParam("limit"))
+	if limit == 0 {
+		limit = 10
+	}
+	if page == 0 {
+		page = 1
+	}
+
+	pagination := map[string]int{
+		"page":  page,
+		"limit": limit,
+	}
+
+	events, count, err := h.eventService.GetEvents(filter, sort, distance, pagination)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, response.ErrorResponse(http.StatusInternalServerError, err.Error()))
 	}
@@ -225,12 +243,13 @@ func (h *EventHandler) GetEvents(c echo.Context) error {
 		return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "Data Event Tidak Ditemukan Satupun", nil))
 	}
 
-	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "Berhasil Menampilkan Events",events))
+	data := pkg.Paginate(events, count, page, limit)
+
+	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "Berhasil Menampilkan Events", data))
 }
 
-
 func (h *EventHandler) UpdateEventWithPricing(c echo.Context) error {
-    var input binder.EventUpdateRequest
+	var input binder.EventUpdateRequest
 
 	if err := c.Bind(&input); err != nil {
 		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, err.Error()))
@@ -239,13 +258,13 @@ func (h *EventHandler) UpdateEventWithPricing(c echo.Context) error {
 	if errorMessage, data := checkValidation(input); errorMessage != "" {
 		return c.JSON(http.StatusBadRequest, response.SuccessResponse(http.StatusBadRequest, errorMessage, data))
 	}
-	
+
 	id := uuid.MustParse(input.ID)
 
 	startTime, _ := time.Parse("2006-01-02 15:04:05", input.StartTime)
 	endTime, _ := time.Parse("2006-01-02 15:04:05", input.EndTime)
 
-	event := entity.UpdateEvent(id, input.Name, input.Description,  input.Organizer, startTime, endTime, input.MustUploadSubmission, input.Province, input.City, input.District, input.FullAddress, input.Latitude, input.Longitude) 
+	event := entity.UpdateEvent(id, input.Name, input.Description, input.Organizer, startTime, endTime, input.MustUploadSubmission, input.Province, input.City, input.District, input.FullAddress, input.Latitude, input.Longitude)
 
 	pricings := make([]entity.Pricing, 0)
 	for _, p := range input.Pricings {
@@ -282,7 +301,7 @@ func (h *EventHandler) DeleteEvent(c echo.Context) error {
 
 	id := uuid.MustParse(input.ID)
 
-	isDeleted,err := h.eventService.DeleteEvent(id); 
+	isDeleted, err := h.eventService.DeleteEvent(id)
 
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, err.Error()))
@@ -303,7 +322,7 @@ func (h *EventHandler) DeletePricing(c echo.Context) error {
 
 	id := uuid.MustParse(input.ID)
 
-	isDeleted, err := h.eventService.DeletePricing(id); 
+	isDeleted, err := h.eventService.DeletePricing(id)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, err.Error()))
 	}

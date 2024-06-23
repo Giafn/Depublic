@@ -20,11 +20,11 @@ type TransactionService interface {
 	CreateTransaction(eventID uuid.UUID, userID uuid.UUID, tickets []binder.Ticket) (*entity.Transaction, bool, error)
 	FindTransactionByID(id uuid.UUID) (*entity.Transaction, error)
 	UpdateTransaction(transaction *entity.Transaction) (*entity.Transaction, error)
-	FindAllTransactions() ([]entity.Transaction, error)
+	FindAllTransactions(page, limit int) ([]entity.Transaction, int, error)
 	DeleteTransaction(id uuid.UUID) error
 	CountAmountTickets(tickets []binder.Ticket, eventID uuid.UUID) (int, error)
 	GetUsersById(id uuid.UUID) (*entity.User, error)
-	FindMyTransactions(userID uuid.UUID) ([]entity.Transaction, error)
+	FindMyTransactions(userID uuid.UUID, page int, limit int) ([]entity.Transaction, int, error)
 	EncryptPaymentURL(paymentURL string, transactionID uuid.UUID) (string, error)
 	DecryptPaymentURL(encryptedPaymentURL string) (string, error)
 	CheckTicketAvailability(transactionID uuid.UUID) (bool, error)
@@ -166,12 +166,12 @@ func (s *transactionService) UpdateTransaction(transaction *entity.Transaction) 
 	return updatedTransaction, nil
 }
 
-func (s *transactionService) FindAllTransactions() ([]entity.Transaction, error) {
-	transactions, err := s.transactionRepository.FindAllTransactions()
+func (s *transactionService) FindAllTransactions(page, limit int) ([]entity.Transaction, int, error) {
+	transactions, count, err := s.transactionRepository.FindAllTransactions(page, limit)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
-	return transactions, nil
+	return transactions, count, nil
 }
 
 func (s *transactionService) DeleteTransaction(id uuid.UUID) error {
@@ -242,12 +242,12 @@ func (s *transactionService) GetUsersById(id uuid.UUID) (*entity.User, error) {
 	return user, nil
 }
 
-func (s *transactionService) FindMyTransactions(userID uuid.UUID) ([]entity.Transaction, error) {
-	transactions, err := s.transactionRepository.FindTransactionsByUserId(userID)
+func (s *transactionService) FindMyTransactions(userID uuid.UUID, page int, limit int) ([]entity.Transaction, int, error) {
+	transactions, count, err := s.transactionRepository.FindTransactionsByUserId(userID, page, limit)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
-	return transactions, nil
+	return transactions, count, nil
 }
 
 func (s *transactionService) EncryptPaymentURL(paymentURL string, transactionID uuid.UUID) (string, error) {

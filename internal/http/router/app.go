@@ -19,6 +19,7 @@ var (
 	onlyUser            = []string{User}
 	onlyPetugasLapangan = []string{PetugasLapangan}
 	excludeUser         = []string{Admin, PetugasLapangan}
+	adminAndUser        = []string{Admin, User}
 )
 
 func AppPublicRoutes(Handler handler.AppHandler) []*route.Route {
@@ -176,21 +177,15 @@ func AppPrivateRoutes(Handler handler.AppHandler) []*route.Route {
 		},
 		{
 			Method:  http.MethodGet,
-			Path:    "/ticket",
-			Handler: ticketHandler.FindAllTickets,
-			Roles:   onlyAdmin,
-		},
-		{
-			Method:  http.MethodGet,
 			Path:    "/ticket/user",
 			Handler: ticketHandler.FindTicketsByUser,
-			Roles:   allRoles,
+			Roles:   onlyAdmin,
 		},
 		{
 			Method:  http.MethodGet,
 			Path:    "/ticket/:id",
 			Handler: ticketHandler.FindTicketByID,
-			Roles:   onlyAdmin,
+			Roles:   allRoles,
 		},
 		{
 			Method:  http.MethodGet,
@@ -200,38 +195,14 @@ func AppPrivateRoutes(Handler handler.AppHandler) []*route.Route {
 		},
 		{
 			Method:  http.MethodPost,
-			Path:    "/ticket/:id",
-			Handler: ticketHandler.UpdateTicket,
-			Roles:   onlyAdmin,
-		},
-		{
-			Method:  http.MethodPost,
 			Path:    "/ticket/validate/:id",
 			Handler: ticketHandler.ValidateTicket,
 			Roles:   onlyPetugasLapangan,
 		},
 		{
-			Method:  http.MethodDelete,
-			Path:    "/ticket/:id",
-			Handler: ticketHandler.DeleteTicketById,
-			Roles:   onlyAdmin,
-		},
-		{
 			Method:  http.MethodGet,
 			Path:    "/ticket/transaction/:transactionId",
 			Handler: ticketHandler.FindTicketsByTransactionId,
-			Roles:   allRoles,
-		},
-		{
-			Method:  http.MethodDelete,
-			Path:    "/ticket/booking/:bookingNum",
-			Handler: ticketHandler.DeleteTicketByBookingNumber,
-			Roles:   onlyAdmin,
-		},
-		{
-			Method:  http.MethodGet,
-			Path:    "/mytransactions",
-			Handler: transactionHandler.FindMyTransactions,
 			Roles:   onlyUser,
 		},
 		{
@@ -244,85 +215,85 @@ func AppPrivateRoutes(Handler handler.AppHandler) []*route.Route {
 			Method:  http.MethodPost,
 			Path:    "/transactions",
 			Handler: transactionHandler.CreateTransaction,
-			Roles:   allRoles,
+			Roles:   onlyUser,
 		},
 		{
 			Method:  http.MethodGet,
 			Path:    "/transactions/:id",
 			Handler: transactionHandler.FindTransactionByID,
-			Roles:   allRoles,
+			Roles:   onlyAdmin,
 		},
 		{
 			Method:  http.MethodGet,
 			Path:    "/transactions",
 			Handler: transactionHandler.FindAllTransactions,
-			Roles:   allRoles,
+			Roles:   onlyAdmin,
 		},
 		{
 			Method:  http.MethodPut,
 			Path:    "/transactions/:id",
 			Handler: transactionHandler.UpdateTransaction,
-			Roles:   allRoles,
+			Roles:   onlyAdmin,
 		},
 		{
 			Method:  http.MethodDelete,
 			Path:    "/transactions/:id",
 			Handler: transactionHandler.DeleteTransaction,
-			Roles:   allRoles,
+			Roles:   onlyAdmin,
 		},
 		{
 			Method:  http.MethodGet,
 			Path:    "/notifications",
 			Handler: notificationHandler.FindAllNotification,
-			Roles:   allRoles,
+			Roles:   onlyUser,
 		},
 		{
 			Method:  http.MethodGet,
 			Path:    "/notifications/:id",
 			Handler: notificationHandler.FindNotificationByID,
-			Roles:   allRoles,
+			Roles:   onlyUser,
 		},
 		{
 			Method:  http.MethodPatch,
 			Path:    "/notifications",
 			Handler: notificationHandler.MarkAllNotificationsAsSeen,
-			Roles:   allRoles,
+			Roles:   onlyUser,
 		},
 		{
 			Method:  http.MethodDelete,
 			Path:    "/notifications",
 			Handler: notificationHandler.DeleteSeenNotifications,
-			Roles:   allRoles,
+			Roles:   onlyUser,
 		},
 		{
 			Method:  http.MethodDelete,
 			Path:    "/notifications/:id",
 			Handler: notificationHandler.DeleteNotificationByID,
-			Roles:   allRoles,
+			Roles:   onlyUser,
 		},
 		{
 			Method:  http.MethodPost,
 			Path:    "/submission",
 			Handler: submissionHandler.CreateSubmission,
-			Roles:   allRoles,
+			Roles:   onlyUser,
 		},
 		{
 			Method:  http.MethodGet,
 			Path:    "/submission",
 			Handler: submissionHandler.ListSubmission,
-			Roles:   allRoles,
+			Roles:   adminAndUser,
 		},
 		{
 			Method:  http.MethodPatch,
 			Path:    "/submission/accept/:id",
 			Handler: submissionHandler.AcceptSubmission,
-			Roles:   allRoles,
+			Roles:   onlyAdmin,
 		},
 		{
 			Method:  http.MethodPatch,
 			Path:    "/submission/reject/:id",
 			Handler: submissionHandler.RejectSubmission,
-			Roles:   allRoles,
+			Roles:   onlyAdmin,
 		},
 	}
 }

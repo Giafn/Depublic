@@ -15,10 +15,9 @@ type TransactionRepository interface {
 	CreateTransaction(transaction *entity.Transaction, tickets []entity.Ticket, eventID uuid.UUID, userID uuid.UUID) (*entity.Transaction, error)
 	FindTransactionByID(id uuid.UUID) (*entity.Transaction, error)
 	UpdateTransaction(transaction *entity.Transaction) (*entity.Transaction, error)
-	FindAllTransactions() ([]entity.Transaction, error)
+	FindAllTransactions(page, limit int) ([]entity.Transaction, int, error)
 	DeleteTransaction(id uuid.UUID) error
-	FindTransactionsByUserId(userID uuid.UUID) ([]entity.Transaction, error)
-	// FindTicketByTransactionID(transactionID uuid.UUID) ([]entity.Ticket, error)
+	FindTransactionsByUserId(userID uuid.UUID, page int, limit int) ([]entity.Transaction, int, error)
 	FindUnpaidTransactionByUserID(userID uuid.UUID, eventID uuid.UUID) (transId uuid.UUID, err error)
 	GetSubmissionByTransactionID(transactionID uuid.UUID) (*entity.Submission, error)
 	UpdateTransactionStatus(transactionID uuid.UUID, status string) (*entity.Transaction, error)
@@ -75,24 +74,40 @@ func (r *transactionRepository) UpdateTransaction(transaction *entity.Transactio
 	return transaction, nil
 }
 
-func (r *transactionRepository) FindAllTransactions() ([]entity.Transaction, error) {
+func (r *transactionRepository) FindAllTransactions(page, limit int) ([]entity.Transaction, int, error) {
 	var transactions []entity.Transaction
-	if err := r.db.Find(&transactions).Error; err != nil {
-		return nil, err
+	if err := r.db.
+		Offset((page - 1) * limit).
+		Limit(limit).
+		Find(&transactions).Error; err != nil {
+		return nil, 0, err
 	}
-	return transactions, nil
+	var count int64
+	if err := r.db.Model(&entity.Transaction{}).Count(&count).Error; err != nil {
+		return nil, 0, err
+	}
+	return transactions, int(count), nil
 }
 
 func (r *transactionRepository) DeleteTransaction(id uuid.UUID) error {
 	return r.db.Delete(&entity.Transaction{}, "id = ?", id).Error
 }
 
-func (r *transactionRepository) FindTransactionsByUserId(userID uuid.UUID) ([]entity.Transaction, error) {
+func (r *transactionRepository) FindTransactionsByUserId(userID uuid.UUID, page int, limit int) ([]entity.Transaction, int, error) {
 	var transactions []entity.Transaction
-	if err := r.db.Find(&transactions, "user_id = ?", userID).Error; err != nil {
-		return nil, err
+	if err := r.db.
+		Offset((page-1)*limit).
+		Limit(limit).
+		Find(&transactions, "user_id = ?", userID).Error; err != nil {
+		return nil, 0, err
 	}
-	return transactions, nil
+
+	var count int64
+	if err := r.db.Model(&entity.Transaction{}).Where("user_id = ?", userID).Count(&count).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return transactions, int(count), nil
 }
 
 func (r *transactionRepository) FindUnpaidTransactionByUserID(userID uuid.UUID, eventID uuid.UUID) (transId uuid.UUID, err error) {

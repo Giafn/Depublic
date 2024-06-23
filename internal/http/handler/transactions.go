@@ -5,10 +5,12 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 
 	"github.com/Giafn/Depublic/internal/entity"
 	"github.com/Giafn/Depublic/internal/http/binder"
 	"github.com/Giafn/Depublic/internal/service"
+	pkg "github.com/Giafn/Depublic/pkg/pagination"
 	"github.com/Giafn/Depublic/pkg/response"
 	"github.com/Giafn/Depublic/pkg/token"
 	"github.com/golang-jwt/jwt/v5"
@@ -85,26 +87,48 @@ func (h *TransactionHandler) FindTransactionByID(c echo.Context) error {
 }
 
 func (h *TransactionHandler) FindAllTransactions(c echo.Context) error {
-	transactions, err := h.transactionService.FindAllTransactions()
+	page, _ := strconv.Atoi(c.QueryParam("page"))
+	limit, _ := strconv.Atoi(c.QueryParam("limit"))
+	if limit == 0 {
+		limit = 10
+	}
+	if page == 0 {
+		page = 1
+	}
+	transactions, count, err := h.transactionService.FindAllTransactions(page, limit)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, response.ErrorResponse(http.StatusInternalServerError, err.Error()))
 	}
 
-	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "sukses menampilkan data transaksi", transactions))
+	// pagination
+	data := pkg.Paginate(transactions, count, page, limit)
+
+	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "sukses menampilkan data transaksi", data))
 }
 
 func (h *TransactionHandler) FindMyTransactions(c echo.Context) error {
+	page, _ := strconv.Atoi(c.QueryParam("page"))
+	limit, _ := strconv.Atoi(c.QueryParam("limit"))
+	if limit == 0 {
+		limit = 10
+	}
+	if page == 0 {
+		page = 1
+	}
+
 	dataUser, _ := c.Get("user").(*jwt.Token)
 	claims := dataUser.Claims.(*token.JwtCustomClaims)
 
 	userID := uuid.MustParse(claims.ID)
 
-	transactions, err := h.transactionService.FindMyTransactions(userID)
+	transactions, count, err := h.transactionService.FindMyTransactions(userID, page, limit)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, response.ErrorResponse(http.StatusInternalServerError, err.Error()))
 	}
 
-	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "sukses menampilkan data transaksi", transactions))
+	data := pkg.Paginate(transactions, count, page, limit)
+
+	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "sukses menampilkan data transaksi", data))
 }
 
 func (h *TransactionHandler) UpdateTransaction(c echo.Context) error {

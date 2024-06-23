@@ -11,7 +11,7 @@ import (
 type EventRepository interface {
 	CreateEvent(event *entity.Event, pricings []entity.Pricing) (*entity.Event, error)
 	FindEventByID(id uuid.UUID) (*entity.Event, error)
-	GetEvents(filter map[string]interface{}, sort string, distance map[string]float64) ([]entity.Event, error)
+	GetEvents(filter map[string]interface{}, sort string, distance map[string]float64, pagination map[string]int) ([]entity.Event, int, error)
 	UpdateEventWithPricing(event *entity.Event, pricings []entity.Pricing) (*entity.Event, error)
 	UpdateEvent(event *entity.Event) (*entity.Event, error)
 	DeleteEvent(event *entity.Event) (bool, error)
@@ -65,7 +65,7 @@ func (r *eventRepository) FindEventByID(id uuid.UUID) (*entity.Event, error) {
 	return &event, nil
 }
 
-func (r *eventRepository) GetEvents(filter map[string]interface{}, sort string, distance map[string]float64) ([]entity.Event, error) {
+func (r *eventRepository) GetEvents(filter map[string]interface{}, sort string, distance map[string]float64, pagination map[string]int) ([]entity.Event, int, error) {
 	var events []entity.Event
 
 	query := r.db.Preload("Pricings")
@@ -113,17 +113,30 @@ func (r *eventRepository) GetEvents(filter map[string]interface{}, sort string, 
 		}
 	}
 
+	// Apply pagination
+	limit := pagination["limit"]
+	page := pagination["page"]
+
 	// Apply sorting
 	switch sort {
 	case "terbaru":
-		query = query.Order("created_at DESC")
+		query = query.
+			Limit(limit).
+			Offset((page - 1) * limit).
+			Order("created_at DESC")
 	case "termahal":
-		query = query.Joins("JOIN pricings ON pricings.event_id = events.id").
+		query = query.
+			Limit(limit).
+			Offset((page - 1) * limit).
+			Joins("JOIN pricings ON pricings.event_id = events.id").
 			Select("events.*, MAX(pricings.fee) as max_fee").
 			Group("events.id").
 			Order("max_fee DESC")
 	case "termurah":
-		query = query.Joins("JOIN pricings ON pricings.event_id = events.id").
+		query = query.
+			Limit(limit).
+			Offset((page - 1) * limit).
+			Joins("JOIN pricings ON pricings.event_id = events.id").
 			Select("events.*, MIN(pricings.fee) as min_fee").
 			Group("events.id").
 			Order("min_fee ASC")
@@ -132,17 +145,25 @@ func (r *eventRepository) GetEvents(filter map[string]interface{}, sort string, 
 			radius := 6371
 			lat := distance["latitude"]
 			lon := distance["longitude"]
-			query = query.Select("events.*, "+
-				"(? * ACOS(SIN(RADIANS(?)) * SIN(RADIANS(latitude)) + COS(RADIANS(?)) * COS(RADIANS(latitude)) * COS(RADIANS(?) - RADIANS(longitude)))) as distance", radius, lat, lat, lon).
+			query = query.
+				Limit(limit).
+				Offset((page-1)*limit).
+				Select("events.*, "+
+					"(? * ACOS(SIN(RADIANS(?)) * SIN(RADIANS(latitude)) + COS(RADIANS(?)) * COS(RADIANS(latitude)) * COS(RADIANS(?) - RADIANS(longitude)))) as distance", radius, lat, lat, lon).
 				Order("distance ASC")
 		}
 	}
 
 	if err := query.Find(&events).Error; err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
-	return events, nil
+	var count int64
+	if err := query.Model(&entity.Event{}).Count(&count).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return events, int(count), nil
 }
 
 func (r *eventRepository) UpdateEventWithPricing(event *entity.Event, pricings []entity.Pricing) (*entity.Event, error) {

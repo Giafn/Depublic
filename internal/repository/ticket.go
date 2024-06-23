@@ -19,6 +19,7 @@ type TicketRepository interface {
 	DeleteTicketByBookingNumber(bookingNumber string) error
 	FindAllTickets() ([]entity.Ticket, error)
 	FindTicketsByTransactionId(transactionId uuid.UUID) ([]entity.Ticket, error)
+	FindTicketsByTransactionID(transactionId, userId uuid.UUID) ([]entity.Ticket, error)
 	FindTicketsByUser(userId uuid.UUID) ([]entity.Ticket, error)
 }
 
@@ -136,6 +137,27 @@ func (r *ticketRepository) FindTicketsByTransactionId(transactionId uuid.UUID) (
 	result := r.db.Where("transaction_id = ?", transactionId).Find(&tickets)
 	if result.Error != nil {
 		return nil, result.Error
+	}
+	return tickets, nil
+}
+
+func (r *ticketRepository) FindTicketsByTransactionID(transactionId, userId uuid.UUID) ([]entity.Ticket, error) {
+	var tickets []entity.Ticket
+	user := new(entity.User)
+	if err := r.db.Where("user_id = ?", userId).Take(user).Error; err != nil {
+		return nil, err
+	}
+	if user.Role == "Admin" {
+		result := r.db.Where("transaction_id = ?", transactionId).Find(&tickets)
+		if result.Error != nil {
+			return nil, result.Error
+		}
+	} else {
+		result := r.db.Joins("JOIN transactions ON transactions.id = tickets.transaction_id").
+			Where("transactions.user_id = ?", userId).Where("transaction_id = ?", transactionId).Find(&tickets)
+		if result.Error != nil {
+			return nil, result.Error
+		}
 	}
 	return tickets, nil
 }

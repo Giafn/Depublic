@@ -14,8 +14,8 @@ type submissionRepository struct {
 
 type SubmissionRepository interface {
 	CreateSubmission(submission *entity.Submission) (*entity.Submission, error)
-	ListSubmission() ([]entity.Submission, error)
-	ListSubmissionByUserID(userID uuid.UUID) ([]entity.Submission, error)
+	ListSubmission(page, limit int) ([]entity.Submission, int, error)
+	ListSubmissionByUserID(userID uuid.UUID, page, limit int) ([]entity.Submission, int, error)
 	FindSubmissionByID(id uuid.UUID) (*entity.Submission, error)
 	UpdateSubmission(submission *entity.Submission) (*entity.Submission, error)
 	FindSubmissionByTransactionID(id uuid.UUID) (*entity.Submission, error)
@@ -34,24 +34,39 @@ func (r *submissionRepository) CreateSubmission(submission *entity.Submission) (
 	return submission, nil
 }
 
-func (r *submissionRepository) ListSubmission() ([]entity.Submission, error) {
+func (r *submissionRepository) ListSubmission(page, limit int) ([]entity.Submission, int, error) {
 	var submissions []entity.Submission
 
-	if err := r.db.Find(&submissions).Error; err != nil {
-		return submissions, err
+	if err := r.db.
+		Offset((page - 1) * limit).
+		Limit(limit).
+		Find(&submissions).Error; err != nil {
+		return submissions, 0, err
 	}
-
-	return submissions, nil
+	var count int64
+	if err := r.db.Model(&entity.Submission{}).Count(&count).Error; err != nil {
+		return submissions, 0, err
+	}
+	return submissions, int(count), nil
 }
 
-func (r *submissionRepository) ListSubmissionByUserID(userID uuid.UUID) ([]entity.Submission, error) {
+func (r *submissionRepository) ListSubmissionByUserID(userID uuid.UUID, page, limit int) ([]entity.Submission, int, error) {
 	var submissions []entity.Submission
 
-	if err := r.db.Where("user_id = ?", userID).Find(&submissions).Error; err != nil {
-		return submissions, err
+	if err := r.db.
+		Offset((page-1)*limit).
+		Limit(limit).
+		Where("user_id = ?", userID).
+		Find(&submissions).Error; err != nil {
+		return submissions, 0, err
 	}
 
-	return submissions, nil
+	var count int64
+	if err := r.db.Model(&entity.Submission{}).Where("user_id = ?", userID).Count(&count).Error; err != nil {
+		return submissions, 0, err
+	}
+
+	return submissions, int(count), nil
 }
 
 func (r *submissionRepository) FindSubmissionByID(id uuid.UUID) (*entity.Submission, error) {
