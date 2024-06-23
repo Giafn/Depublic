@@ -3,6 +3,7 @@ package handler
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/Giafn/Depublic/internal/http/binder"
 	"github.com/Giafn/Depublic/internal/service"
@@ -195,7 +196,12 @@ func (h *UserHandler) ResendEmailVerification(c echo.Context) error {
 
 func (h *UserHandler) Logout(c echo.Context) error {
 	tokenString := c.Request().Header.Get("Authorization")
-	tokenString = tokenString[7:]
+	if strings.HasPrefix(tokenString, "Bearer ") {
+		tokenString = tokenString[7:]
+	} else {
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, "Invalid authorization header format"))
+	}
+
 	err := h.userService.Logout(tokenString)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, err.Error()))
@@ -233,7 +239,6 @@ func (h *UserHandler) CreateUser(c echo.Context) error {
 	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "sukses membuat user", data))
 }
 
-// update user
 func (h *UserHandler) UpdateUser(c echo.Context) error {
 	var input binder.UserUpdateRequest
 

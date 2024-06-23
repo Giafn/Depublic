@@ -15,7 +15,6 @@ type UserRepository interface {
 	CreateUserWithProfile(user *entity.User, profile *entity.Profile) (*entity.User, error)
 	UpdateUserWithProfile(user *entity.User, profile *entity.Profile) (*entity.User, error)
 	FindUserByID(id uuid.UUID) (*entity.User, error)
-	FindProfileByUserID(userID uuid.UUID) (*entity.Profile, error)
 	FindUserByEmail(email string) (*entity.User, error)
 	FindAllUser() ([]entity.User, error)
 	UpdateUser(user *entity.User) (*entity.User, error)
@@ -79,15 +78,6 @@ func (r *userRepository) FindAllUser() ([]entity.User, error) {
 	}
 
 	return users, nil
-}
-
-// find profile by user id
-func (r *userRepository) FindProfileByUserID(userID uuid.UUID) (*entity.Profile, error) {
-	profile := new(entity.Profile)
-	if err := r.db.Where("user_id = ?", userID).Take(&profile).Error; err != nil {
-		return profile, err
-	}
-	return profile, nil
 }
 
 func (r *userRepository) CreateUser(user *entity.User) (*entity.User, error) {

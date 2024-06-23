@@ -139,12 +139,6 @@ func AppPrivateRoutes(Handler handler.AppHandler) []*route.Route {
 			Roles:   allRoles,
 		},
 		{
-			Method:  http.MethodDelete,
-			Path:    "/profile",
-			Handler: profileHandler.DeleteProfile,
-			Roles:   allRoles,
-		},
-		{
 			Method:  http.MethodPost,
 			Path:    "/event",
 			Handler: eventHandler.CreateNewEvent,

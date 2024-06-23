@@ -31,10 +31,11 @@ type UserService interface {
 }
 
 type userService struct {
-	userRepository repository.UserRepository
-	tokenUseCase   token.TokenUseCase
-	encryptTool    encrypt.EncryptTool
-	cfg            *configs.Config
+	userRepository    repository.UserRepository
+	profileRepository repository.ProfileRepository
+	tokenUseCase      token.TokenUseCase
+	encryptTool       encrypt.EncryptTool
+	cfg               *configs.Config
 }
 
 type jwtResponse struct {
@@ -44,15 +45,17 @@ type jwtResponse struct {
 
 func NewUserService(
 	userRepository repository.UserRepository,
+	profileRepository repository.ProfileRepository,
 	tokenUseCase token.TokenUseCase,
 	encryptTool encrypt.EncryptTool,
 	cfg *configs.Config,
 ) UserService {
 	return &userService{
-		userRepository: userRepository,
-		tokenUseCase:   tokenUseCase,
-		encryptTool:    encryptTool,
-		cfg:            cfg,
+		userRepository:    userRepository,
+		profileRepository: profileRepository,
+		tokenUseCase:      tokenUseCase,
+		encryptTool:       encryptTool,
+		cfg:               cfg,
 	}
 }
 
@@ -272,7 +275,7 @@ func (s *userService) UpdateUser(id uuid.UUID, input *binder.UserUpdateRequest, 
 	if err != nil {
 		return nil, errors.New("user tidak ditemukan")
 	}
-	profile, err := s.userRepository.FindProfileByUserID(id)
+	profile, err := s.profileRepository.FindProfileByUserID(id)
 	if err != nil {
 		return nil, errors.New("user tidak ditemukan")
 	}

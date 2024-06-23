@@ -171,6 +171,19 @@ func (h *TransactionHandler) WebhookPayment(c echo.Context) error {
 	transactionStatus := request.TransactionStatus
 	if transactionStatus != "settlement" && transactionStatus != "capture" {
 		fmt.Println("Transaction status not accepted")
+		// update status transaction
+		transaction, err := h.transactionService.FindTransactionByID(transID)
+		if err != nil {
+			fmt.Println("Error finding transaction:", err)
+			return c.String(http.StatusInternalServerError, "Internal Server Error")
+		}
+
+		transaction.Status = transactionStatus
+		_, err = h.transactionService.UpdateTransaction(transaction)
+		if err != nil {
+			fmt.Println("Error updating transaction:", err)
+			return c.String(http.StatusInternalServerError, "Internal Server Error")
+		}
 		return c.String(http.StatusOK, "Webhook received successfully")
 	}
 
@@ -198,6 +211,7 @@ func (h *TransactionHandler) WebhookPayment(c echo.Context) error {
 	}
 
 	transaction.IsPaid = true
+	transaction.Status = "paid"
 	_, err = h.transactionService.UpdateTransaction(transaction)
 
 	if err != nil {

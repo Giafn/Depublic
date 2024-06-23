@@ -1,4 +1,3 @@
-
 BEGIN;
 CREATE TABLE IF NOT EXISTS notifications (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -8,8 +7,8 @@ CREATE TABLE IF NOT EXISTS notifications (
     is_seen BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT now(),
     updated_at TIMESTAMP DEFAULT now(),
-    deleted_at TIMESTAMP DEFAULT NULL
-     CONSTRAINT fk_event_id
+    deleted_at TIMESTAMP DEFAULT NULL,
+    CONSTRAINT fk_user_id
         FOREIGN KEY (user_id)
         REFERENCES users (user_id)
         ON DELETE CASCADE

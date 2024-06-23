@@ -29,7 +29,7 @@ func main() {
 	encryptTool := encrypt.NewEncryptTool(cfg.Encrypt.SecretKey, cfg.Encrypt.Iv)
 
 	publicRoutes := builder.BuildAppPublicRoutes(db, redisDB, encryptTool, tokenUse, cfg)
-	privateRoutes := builder.BuildAppPrivateRoutes(db, redisDB, encryptTool, cfg)
+	privateRoutes := builder.BuildAppPrivateRoutes(db, redisDB, encryptTool, tokenUse, cfg)
 
 	srv := server.NewServer("app", publicRoutes, privateRoutes, cfg.JWT.SecretKey, tokenUse)
 	srv.Run(cfg.Port)
