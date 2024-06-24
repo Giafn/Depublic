@@ -69,7 +69,7 @@ func (s *submissionService) ListSubmission(userId uuid.UUID, page int, limit int
 	}
 
 	for i := range submissions {
-		filename := fmt.Sprintf("http://%s:%s/app/api/v1/file/%s", s.cfg.Host, s.cfg.Port, submissions[i].Filename)
+		filename := fmt.Sprintf("%s://%s:%s/app/api/v1/file/%s", s.cfg.Deploy.Protocol, s.cfg.Deploy.Host, s.cfg.Deploy.Port, submissions[i].Filename)
 
 		submissions[i].Filename = filename
 	}
