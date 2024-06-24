@@ -255,7 +255,7 @@ func (s *transactionService) EncryptPaymentURL(paymentURL string, transactionID 
 
 	paymentId := explodedPaymentURL[len(explodedPaymentURL)-1]
 
-	url := fmt.Sprintf("%s://%s:%s/app/api/v1/payment?pay_id=%s&transaction_id=%s", s.cfg.Deploy.Protocol, s.cfg.Deploy.Host, s.cfg.Deploy.Port, paymentId, transactionID.String())
+	url := fmt.Sprintf("%s://%s%s/app/api/v1/payment?pay_id=%s&transaction_id=%s", s.cfg.Deploy.Protocol, s.cfg.Deploy.Host, s.cfg.Deploy.Port, paymentId, transactionID.String())
 	return url, nil
 }
 

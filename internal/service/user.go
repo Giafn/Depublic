@@ -132,7 +132,7 @@ func (s *userService) RegisterUser(input *binder.UserRegisterRequest, file *mult
 		return nil, err
 	}
 
-	url := fmt.Sprintf("%s://%s:%s/app/api/v1/account/verify/%s", s.cfg.Host, s.cfg.Port, newUser.UserId.String())
+	url := fmt.Sprintf("%s://%s%s/app/api/v1/account/verify/%s", s.cfg.Deploy.Protocol, s.cfg.Deploy.Host, s.cfg.Deploy.Port, newUser.UserId.String())
 	html := CreateConfirmationAccountEmailHtml(url, input.FullName)
 
 	ScheduleEmails(
@@ -163,7 +163,7 @@ func (s *userService) FindAllUser(page, limit int) ([]entity.User, int, error) {
 				Gender:         v.Profiles.Gender,
 				DateOfBirth:    v.Profiles.DateOfBirth,
 				PhoneNumber:    unEncryptedPhone,
-				ProfilePicture: fmt.Sprintf("%s://%s:%s/app/api/v1/file/%s", s.cfg.Deploy.Protocol, s.cfg.Deploy.Host, s.cfg.Deploy.Port, v.Profiles.ProfilePicture),
+				ProfilePicture: fmt.Sprintf("%s://%s%s/app/api/v1/file/%s", s.cfg.Deploy.Protocol, s.cfg.Deploy.Host, s.cfg.Deploy.Port, v.Profiles.ProfilePicture),
 				City:           v.Profiles.City,
 				Province:       v.Profiles.Province,
 			},
@@ -181,7 +181,7 @@ func (s *userService) FindUserByID(id uuid.UUID) (*entity.User, error) {
 	}
 	phoneNumber, _ := s.encryptTool.Decrypt(user.Profiles.PhoneNumber)
 	user.Profiles.PhoneNumber = phoneNumber
-	user.Profiles.ProfilePicture = fmt.Sprintf("%s://%s:%s/app/api/v1/file/%s", s.cfg.Deploy.Protocol, s.cfg.Deploy.Host, s.cfg.Deploy.Port, user.Profiles.ProfilePicture)
+	user.Profiles.ProfilePicture = fmt.Sprintf("%s://%s%s/app/api/v1/file/%s", s.cfg.Deploy.Protocol, s.cfg.Deploy.Host, s.cfg.Deploy.Port, user.Profiles.ProfilePicture)
 
 	return user, nil
 }
@@ -211,7 +211,7 @@ func (s *userService) ResendEmailVerification(email string) error {
 		return errors.New("akun anda sudah terverifikasi")
 	}
 
-	url := fmt.Sprintf("%s://%s:%s/app/api/v1/account/verify/%s", s.cfg.Deploy.Protocol, s.cfg.Deploy.Host, s.cfg.Deploy.Port, user.UserId.String())
+	url := fmt.Sprintf("%s://%s%s/app/api/v1/account/verify/%s", s.cfg.Deploy.Protocol, s.cfg.Deploy.Host, s.cfg.Deploy.Port, user.UserId.String())
 	html := CreateConfirmationAccountEmailHtml(url, user.Profiles.FullName)
 
 	ScheduleEmails(
@@ -338,7 +338,7 @@ func (s *userService) UpdateUser(id uuid.UUID, input *binder.UserUpdateRequest, 
 	updatedUser, err := s.userRepository.UpdateUserWithProfile(user, profile)
 	phoneNumber, _ := s.encryptTool.Decrypt(updatedUser.Profiles.PhoneNumber)
 	updatedUser.Profiles.PhoneNumber = phoneNumber
-	updatedUser.Profiles.ProfilePicture = fmt.Sprintf("%s://%s:%s/app/api/v1/file/%s", s.cfg.Deploy.Protocol, s.cfg.Host, s.cfg.Port, updatedUser.Profiles.ProfilePicture)
+	updatedUser.Profiles.ProfilePicture = fmt.Sprintf("%s://%s%s/app/api/v1/file/%s", s.cfg.Deploy.Protocol, s.cfg.Host, s.cfg.Port, updatedUser.Profiles.ProfilePicture)
 	if err != nil {
 		upload.DeleteFile(profile.ProfilePicture)
 		return nil, err
