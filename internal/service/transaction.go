@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/Giafn/Depublic/configs"
 	"github.com/Giafn/Depublic/internal/entity"
@@ -20,11 +21,11 @@ type TransactionService interface {
 	CreateTransaction(eventID uuid.UUID, userID uuid.UUID, tickets []binder.Ticket) (*entity.Transaction, bool, error)
 	FindTransactionByID(id uuid.UUID) (*entity.Transaction, error)
 	UpdateTransaction(transaction *entity.Transaction) (*entity.Transaction, error)
-	FindAllTransactions() ([]entity.Transaction, error)
+	FindAllTransactions(page, limit int) ([]entity.Transaction, int, error)
 	DeleteTransaction(id uuid.UUID) error
 	CountAmountTickets(tickets []binder.Ticket, eventID uuid.UUID) (int, error)
 	GetUsersById(id uuid.UUID) (*entity.User, error)
-	FindMyTransactions(userID uuid.UUID) ([]entity.Transaction, error)
+	FindMyTransactions(userID uuid.UUID, page int, limit int) ([]entity.Transaction, int, error)
 	EncryptPaymentURL(paymentURL string, transactionID uuid.UUID) (string, error)
 	DecryptPaymentURL(encryptedPaymentURL string) (string, error)
 	CheckTicketAvailability(transactionID uuid.UUID) (bool, error)
@@ -80,6 +81,20 @@ func (s *transactionService) CreateTransaction(
 	unpaidTransactionId, err := s.transactionRepository.FindUnpaidTransactionByUserID(userID, eventID)
 	if err != nil {
 		return nil, false, fmt.Errorf("error, there is unpaid transaction with transaction_id: %s", unpaidTransactionId)
+	}
+
+	// check event start date and end date
+	event, err := s.eventRepository.FindEventByID(eventID)
+	if err != nil {
+		return nil, false, err
+	}
+
+	now := time.Now()
+	if now.After(event.StartTime) {
+		if now.After(event.EndTime) {
+			return nil, false, errors.New("event already ended")
+		}
+		return nil, false, errors.New("event already started")
 	}
 
 	totalAmount, err := s.CountAmountTickets(tickets, eventID)
@@ -166,12 +181,12 @@ func (s *transactionService) UpdateTransaction(transaction *entity.Transaction) 
 	return updatedTransaction, nil
 }
 
-func (s *transactionService) FindAllTransactions() ([]entity.Transaction, error) {
-	transactions, err := s.transactionRepository.FindAllTransactions()
+func (s *transactionService) FindAllTransactions(page, limit int) ([]entity.Transaction, int, error) {
+	transactions, count, err := s.transactionRepository.FindAllTransactions(page, limit)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
-	return transactions, nil
+	return transactions, count, nil
 }
 
 func (s *transactionService) DeleteTransaction(id uuid.UUID) error {
@@ -242,12 +257,12 @@ func (s *transactionService) GetUsersById(id uuid.UUID) (*entity.User, error) {
 	return user, nil
 }
 
-func (s *transactionService) FindMyTransactions(userID uuid.UUID) ([]entity.Transaction, error) {
-	transactions, err := s.transactionRepository.FindTransactionsByUserId(userID)
+func (s *transactionService) FindMyTransactions(userID uuid.UUID, page int, limit int) ([]entity.Transaction, int, error) {
+	transactions, count, err := s.transactionRepository.FindTransactionsByUserId(userID, page, limit)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
-	return transactions, nil
+	return transactions, count, nil
 }
 
 func (s *transactionService) EncryptPaymentURL(paymentURL string, transactionID uuid.UUID) (string, error) {
@@ -255,7 +270,7 @@ func (s *transactionService) EncryptPaymentURL(paymentURL string, transactionID 
 
 	paymentId := explodedPaymentURL[len(explodedPaymentURL)-1]
 
-	url := fmt.Sprintf("http://%s:%s/app/api/v1/payment?pay_id=%s&transaction_id=%s", s.cfg.Host, s.cfg.Port, paymentId, transactionID.String())
+	url := fmt.Sprintf("%s://%s%s/app/api/v1/payment?pay_id=%s&transaction_id=%s", s.cfg.Deploy.Protocol, s.cfg.Deploy.Host, s.cfg.Deploy.Port, paymentId, transactionID.String())
 	return url, nil
 }
 

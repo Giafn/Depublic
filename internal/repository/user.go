@@ -1,9 +1,6 @@
 package repository
 
 import (
-	"encoding/json"
-	"time"
-
 	"github.com/Giafn/Depublic/internal/entity"
 	"github.com/Giafn/Depublic/pkg/cache"
 	"github.com/google/uuid"
@@ -16,8 +13,9 @@ type UserRepository interface {
 	UpdateUserWithProfile(user *entity.User, profile *entity.Profile) (*entity.User, error)
 	FindUserByID(id uuid.UUID) (*entity.User, error)
 	FindUserByEmail(email string) (*entity.User, error)
-	FindAllUser() ([]entity.User, error)
+	FindAllUser(page, limit int) ([]entity.User, int, error)
 	UpdateUser(user *entity.User) (*entity.User, error)
+	DeleteUser(id uuid.UUID) error
 }
 
 type userRepository struct {
@@ -51,33 +49,25 @@ func (r *userRepository) FindUserByEmail(email string) (*entity.User, error) {
 	return user, nil
 }
 
-func (r *userRepository) FindAllUser() ([]entity.User, error) {
+func (r *userRepository) FindAllUser(page, limit int) ([]entity.User, int, error) {
+	offset := (page - 1) * limit
+
 	users := make([]entity.User, 0)
-
-	key := "FindAllUsers"
-
-	// data := r.cacheable.Get(key)
-	data := ""
-	if data == "" {
-		if err := r.db.Preload("Profiles").
-			Find(&users).
-			Error; err != nil {
-			return users, err
-		}
-		marshalledUsers, _ := json.Marshal(users)
-		err := r.cacheable.Set(key, marshalledUsers, 5*time.Minute)
-		if err != nil {
-			return users, err
-		}
-	} else {
-		// Data ditemukan di Redis, unmarshal data ke users
-		err := json.Unmarshal([]byte(data), &users)
-		if err != nil {
-			return users, err
-		}
+	if err := r.db.
+		Offset(offset).
+		Limit(limit).
+		Preload("Profiles").
+		Find(&users).
+		Error; err != nil {
+		return users, 0, err
 	}
 
-	return users, nil
+	var count int64
+	if err := r.db.Model(&entity.User{}).Count(&count).Error; err != nil {
+		return users, 0, err
+	}
+
+	return users, int(count), nil
 }
 
 func (r *userRepository) CreateUser(user *entity.User) (*entity.User, error) {
@@ -154,4 +144,22 @@ func (r *userRepository) UpdateUser(user *entity.User) (*entity.User, error) {
 	}
 
 	return user, nil
+}
+
+func (r *userRepository) DeleteUser(id uuid.UUID) error {
+	if err := r.db.Where("user_id = ?", id).Delete(&entity.User{}).Error; err != nil {
+		return err
+	}
+
+	// profile delete
+	if err := r.db.Where("user_id = ?", id).Delete(&entity.Profile{}).Error; err != nil {
+		return err
+	}
+
+	err := r.cacheable.Del("FindAllUsers")
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

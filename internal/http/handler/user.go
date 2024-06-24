@@ -3,11 +3,15 @@ package handler
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/Giafn/Depublic/internal/http/binder"
 	"github.com/Giafn/Depublic/internal/service"
+	pkg "github.com/Giafn/Depublic/pkg/pagination"
 	"github.com/Giafn/Depublic/pkg/response"
+	"github.com/Giafn/Depublic/pkg/token"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 )
@@ -85,7 +89,15 @@ func (h *UserHandler) Register(c echo.Context) error {
 }
 
 func (h *UserHandler) FindAllUser(c echo.Context) error {
-	users, err := h.userService.FindAllUser()
+	page, _ := strconv.Atoi(c.QueryParam("page"))
+	limit, _ := strconv.Atoi(c.QueryParam("limit"))
+	if limit == 0 {
+		limit = 10
+	}
+	if page == 0 {
+		page = 1
+	}
+	users, count, err := h.userService.FindAllUser(page, limit)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, err.Error()))
 	}
@@ -112,7 +124,9 @@ func (h *UserHandler) FindAllUser(c echo.Context) error {
 		usersResponse = append(usersResponse, userMap)
 	}
 
-	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "sukses menampilkan data user", usersResponse))
+	data := pkg.Paginate(usersResponse, count, page, limit)
+
+	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "sukses menampilkan data user", data))
 }
 
 func (h *UserHandler) FindUserByID(c echo.Context) error {
@@ -279,4 +293,33 @@ func (h *UserHandler) UpdateUser(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "sukses update user", userResponse))
+}
+
+func (h *UserHandler) DeleteUser(c echo.Context) error {
+	var input binder.UserFindByIDRequest
+
+	if err := c.Bind(&input); err != nil {
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, "ada kesalahan input"))
+	}
+
+	if errorMessage, data := checkValidation(input); errorMessage != "" {
+		return c.JSON(http.StatusBadRequest, response.SuccessResponse(http.StatusBadRequest, errorMessage, data))
+	}
+
+	id := uuid.MustParse(input.ID)
+	dataUser, _ := c.Get("user").(*jwt.Token)
+	claims := dataUser.Claims.(*token.JwtCustomClaims)
+
+	userID := uuid.MustParse(claims.ID)
+
+	if id == userID {
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, "tidak bisa menghapus akun sendiri"))
+	}
+
+	err := h.userService.DeleteUser(id)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, err.Error()))
+	}
+
+	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "sukses delete user", nil))
 }

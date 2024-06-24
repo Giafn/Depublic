@@ -3,10 +3,12 @@ package handler
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/Giafn/Depublic/internal/entity"
 	"github.com/Giafn/Depublic/internal/http/binder"
 	"github.com/Giafn/Depublic/internal/service"
+	pkg "github.com/Giafn/Depublic/pkg/pagination"
 	"github.com/Giafn/Depublic/pkg/response"
 	"github.com/Giafn/Depublic/pkg/token"
 	"github.com/golang-jwt/jwt/v5"
@@ -99,11 +101,20 @@ func (h *submissionHandler) CreateSubmission(c echo.Context) error {
 }
 
 func (h *submissionHandler) ListSubmission(c echo.Context) error {
+	page, _ := strconv.Atoi(c.QueryParam("page"))
+	limit, _ := strconv.Atoi(c.QueryParam("limit"))
+	if limit == 0 {
+		limit = 10
+	}
+	if page == 0 {
+		page = 1
+	}
+
 	dataUser, _ := c.Get("user").(*jwt.Token)
 	claims := dataUser.Claims.(*token.JwtCustomClaims)
 
 	userID := uuid.MustParse(claims.ID)
-	submissions, err := h.submissionService.ListSubmission(userID)
+	submissions, count, err := h.submissionService.ListSubmission(userID, page, limit)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, response.ErrorResponse(http.StatusInternalServerError, err.Error()))
 	}
@@ -126,7 +137,9 @@ func (h *submissionHandler) ListSubmission(c echo.Context) error {
 		})
 	}
 
-	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "List submission", data))
+	dataRes := pkg.Paginate(data, count, page, limit)
+
+	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "List submission", dataRes))
 
 }
 

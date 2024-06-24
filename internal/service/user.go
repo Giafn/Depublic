@@ -23,11 +23,12 @@ type UserService interface {
 	RegisterUser(user *binder.UserRegisterRequest, file *multipart.FileHeader) (*entity.User, error)
 	CreateUser(user *binder.UserCreateRequest, file *multipart.FileHeader) (*entity.User, error)
 	UpdateUser(id uuid.UUID, user *binder.UserUpdateRequest, file *multipart.FileHeader) (*entity.User, error)
-	FindAllUser() ([]entity.User, error)
+	FindAllUser(page, limit int) ([]entity.User, int, error)
 	FindUserByID(id uuid.UUID) (*entity.User, error)
 	VerifyEmail(id uuid.UUID) error
 	ResendEmailVerification(email string) error
 	Logout(tokenString string) error
+	DeleteUser(id uuid.UUID) error
 }
 
 type userService struct {
@@ -132,7 +133,7 @@ func (s *userService) RegisterUser(input *binder.UserRegisterRequest, file *mult
 		return nil, err
 	}
 
-	url := fmt.Sprintf("http://%s:%s/app/api/v1/account/verify/%s", s.cfg.Host, s.cfg.Port, newUser.UserId.String())
+	url := fmt.Sprintf("%s://%s%s/app/api/v1/account/verify/%s", s.cfg.Deploy.Protocol, s.cfg.Deploy.Host, s.cfg.Deploy.Port, newUser.UserId.String())
 	html := CreateConfirmationAccountEmailHtml(url, input.FullName)
 
 	ScheduleEmails(
@@ -144,10 +145,10 @@ func (s *userService) RegisterUser(input *binder.UserRegisterRequest, file *mult
 	return newUser, nil
 }
 
-func (s *userService) FindAllUser() ([]entity.User, error) {
-	users, err := s.userRepository.FindAllUser()
+func (s *userService) FindAllUser(page, limit int) ([]entity.User, int, error) {
+	users, count, err := s.userRepository.FindAllUser(page, limit)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
 	formattedUser := make([]entity.User, 0)
@@ -163,7 +164,7 @@ func (s *userService) FindAllUser() ([]entity.User, error) {
 				Gender:         v.Profiles.Gender,
 				DateOfBirth:    v.Profiles.DateOfBirth,
 				PhoneNumber:    unEncryptedPhone,
-				ProfilePicture: fmt.Sprintf("http://%s:%s/app/api/v1/file/%s", s.cfg.Host, s.cfg.Port, v.Profiles.ProfilePicture),
+				ProfilePicture: fmt.Sprintf("%s://%s%s/app/api/v1/file/%s", s.cfg.Deploy.Protocol, s.cfg.Deploy.Host, s.cfg.Deploy.Port, v.Profiles.ProfilePicture),
 				City:           v.Profiles.City,
 				Province:       v.Profiles.Province,
 			},
@@ -171,7 +172,7 @@ func (s *userService) FindAllUser() ([]entity.User, error) {
 		})
 	}
 
-	return formattedUser, nil
+	return formattedUser, count, nil
 }
 
 func (s *userService) FindUserByID(id uuid.UUID) (*entity.User, error) {
@@ -181,7 +182,7 @@ func (s *userService) FindUserByID(id uuid.UUID) (*entity.User, error) {
 	}
 	phoneNumber, _ := s.encryptTool.Decrypt(user.Profiles.PhoneNumber)
 	user.Profiles.PhoneNumber = phoneNumber
-	user.Profiles.ProfilePicture = fmt.Sprintf("http://%s:%s/app/api/v1/file/%s", s.cfg.Host, s.cfg.Port, user.Profiles.ProfilePicture)
+	user.Profiles.ProfilePicture = fmt.Sprintf("%s://%s%s/app/api/v1/file/%s", s.cfg.Deploy.Protocol, s.cfg.Deploy.Host, s.cfg.Deploy.Port, user.Profiles.ProfilePicture)
 
 	return user, nil
 }
@@ -211,7 +212,7 @@ func (s *userService) ResendEmailVerification(email string) error {
 		return errors.New("akun anda sudah terverifikasi")
 	}
 
-	url := fmt.Sprintf("http://%s:%s/app/api/v1/account/verify/%s", s.cfg.Host, s.cfg.Port, user.UserId.String())
+	url := fmt.Sprintf("%s://%s%s/app/api/v1/account/verify/%s", s.cfg.Deploy.Protocol, s.cfg.Deploy.Host, s.cfg.Deploy.Port, user.UserId.String())
 	html := CreateConfirmationAccountEmailHtml(url, user.Profiles.FullName)
 
 	ScheduleEmails(
@@ -338,7 +339,7 @@ func (s *userService) UpdateUser(id uuid.UUID, input *binder.UserUpdateRequest, 
 	updatedUser, err := s.userRepository.UpdateUserWithProfile(user, profile)
 	phoneNumber, _ := s.encryptTool.Decrypt(updatedUser.Profiles.PhoneNumber)
 	updatedUser.Profiles.PhoneNumber = phoneNumber
-	updatedUser.Profiles.ProfilePicture = fmt.Sprintf("http://%s:%s/app/api/v1/file/%s", s.cfg.Host, s.cfg.Port, updatedUser.Profiles.ProfilePicture)
+	updatedUser.Profiles.ProfilePicture = fmt.Sprintf("%s://%s%s/app/api/v1/file/%s", s.cfg.Deploy.Protocol, s.cfg.Host, s.cfg.Port, updatedUser.Profiles.ProfilePicture)
 	if err != nil {
 		upload.DeleteFile(profile.ProfilePicture)
 		return nil, err
@@ -347,4 +348,25 @@ func (s *userService) UpdateUser(id uuid.UUID, input *binder.UserUpdateRequest, 
 	upload.DeleteFile(oldProfilePic)
 
 	return updatedUser, nil
+}
+
+func (s *userService) DeleteUser(id uuid.UUID) error {
+	user, err := s.userRepository.FindUserByID(id)
+	if err != nil {
+		return errors.New("user tidak ditemukan")
+	}
+
+	profile, err := s.profileRepository.FindProfileByUserID(id)
+	if err != nil {
+		return errors.New("user tidak ditemukan")
+	}
+
+	err = s.userRepository.DeleteUser(user.UserId)
+	if err != nil {
+		return err
+	}
+
+	upload.DeleteFile(profile.ProfilePicture)
+
+	return nil
 }

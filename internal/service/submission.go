@@ -23,7 +23,7 @@ type submissionService struct {
 
 type SubmissionService interface {
 	CreateSubmission(submission *entity.Submission) (*entity.Submission, error)
-	ListSubmission(userId uuid.UUID) ([]entity.Submission, error)
+	ListSubmission(userId uuid.UUID, page int, limit int) ([]entity.Submission, int, error)
 	FindSubmissionByID(id uuid.UUID) (*entity.Submission, error)
 	UpdateSubmission(submission *entity.Submission) (*entity.Submission, error)
 	FindTransactionByID(id uuid.UUID) (*entity.Transaction, error)
@@ -55,26 +55,26 @@ func (s *submissionService) CreateSubmission(submission *entity.Submission) (*en
 	return s.submissionRepo.CreateSubmission(submission)
 }
 
-func (s *submissionService) ListSubmission(userId uuid.UUID) ([]entity.Submission, error) {
+func (s *submissionService) ListSubmission(userId uuid.UUID, page int, limit int) ([]entity.Submission, int, error) {
 	user, err := s.userRepo.FindUserByID(userId)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	if user.Role == "Admin" {
-		return s.submissionRepo.ListSubmission()
+		return s.submissionRepo.ListSubmission(page, limit)
 	}
-	submissions, err := s.submissionRepo.ListSubmissionByUserID(userId)
+	submissions, count, err := s.submissionRepo.ListSubmissionByUserID(userId, page, limit)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
 	for i := range submissions {
-		filename := fmt.Sprintf("http://%s:%s/app/api/v1/file/%s", s.cfg.Host, s.cfg.Port, submissions[i].Filename)
+		filename := fmt.Sprintf("%s://%s%s/app/api/v1/file/%s", s.cfg.Deploy.Protocol, s.cfg.Deploy.Host, s.cfg.Deploy.Port, submissions[i].Filename)
 
 		submissions[i].Filename = filename
 	}
 
-	return submissions, nil
+	return submissions, count, nil
 }
 
 func (s *submissionService) FindSubmissionByID(id uuid.UUID) (*entity.Submission, error) {

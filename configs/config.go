@@ -17,6 +17,13 @@ type Config struct {
 	Encrypt  EncryptConfig  `envPrefix:"ENCRYPT_"`
 	SMTP     SMTPConfig     `envPrefix:"SMTP_"`
 	Midtrans MidtransConfig `envPrefix:"MIDTRANS_"`
+	Deploy   DeployConfig   `envPrefix:"DEPLOY_"`
+}
+
+type DeployConfig struct {
+	Protocol string `env:"PROTOCOL" envDefault:"https"`
+	Host     string `env:"HOST" envDefault:"7d2c39ddc228e4.lhr.life"`
+	Port     string `env:"PORT" envDefault:""` //use : before port
 }
 
 type PostgresConfig struct {

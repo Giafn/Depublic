@@ -15,7 +15,7 @@ type TicketService interface {
 	DeleteTicketById(id uuid.UUID) error
 	DeleteTicketByBookingNumber(bookingNumber string) error
 	FindAllTickets() ([]entity.Ticket, error)
-	FindTicketsByTransactionId(transactionId uuid.UUID) ([]entity.Ticket, error)
+	FindTicketsByTransactionId(transactionId, userId uuid.UUID) ([]entity.Ticket, error)
 	FindTicketsByUser(userId uuid.UUID) ([]entity.Ticket, error)
 }
 
@@ -30,8 +30,8 @@ func NewTicketService(ticketRepository repository.TicketRepository) TicketServic
 }
 
 func (s *ticketService) CreateTicket(ticket *entity.Ticket) (*entity.Ticket, error) {
-    // Implementation logic here, for example:
-    // return s.ticketRepository.Save(ticket)
+	// Implementation logic here, for example:
+	// return s.ticketRepository.Save(ticket)
 
 	newTicket, err := s.ticketRepository.CreateTicket(ticket)
 
@@ -52,10 +52,10 @@ func (s *ticketService) UpdateTicket(ticket *entity.Ticket) (*entity.Ticket, err
 
 func (s *ticketService) ValidateTicket(ticket *entity.Ticket) (*entity.Ticket, error) {
 	validatedTicket, err := s.ticketRepository.ValidateTicket(ticket)
-    if err != nil {
-        return nil, err
-    }
-    return validatedTicket, nil
+	if err != nil {
+		return nil, err
+	}
+	return validatedTicket, nil
 }
 
 func (s *ticketService) FindTicketByBookingNumber(bookingNumber string) (*entity.Ticket, error) {
@@ -78,8 +78,8 @@ func (s *ticketService) FindAllTickets() ([]entity.Ticket, error) {
 	return tickets, nil
 }
 
-func (s *ticketService) FindTicketsByTransactionId(transactionId uuid.UUID) ([]entity.Ticket, error) {
-	tickets, err := s.ticketRepository.FindTicketsByTransactionId(transactionId)
+func (s *ticketService) FindTicketsByTransactionId(transactionId, userId uuid.UUID) ([]entity.Ticket, error) {
+	tickets, err := s.ticketRepository.FindTicketsByTransactionID(transactionId, userId)
 	if err != nil {
 		return nil, err
 	}
