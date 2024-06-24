@@ -28,6 +28,7 @@ type UserService interface {
 	VerifyEmail(id uuid.UUID) error
 	ResendEmailVerification(email string) error
 	Logout(tokenString string) error
+	DeleteUser(id uuid.UUID) error
 }
 
 type userService struct {
@@ -347,4 +348,25 @@ func (s *userService) UpdateUser(id uuid.UUID, input *binder.UserUpdateRequest, 
 	upload.DeleteFile(oldProfilePic)
 
 	return updatedUser, nil
+}
+
+func (s *userService) DeleteUser(id uuid.UUID) error {
+	user, err := s.userRepository.FindUserByID(id)
+	if err != nil {
+		return errors.New("user tidak ditemukan")
+	}
+
+	profile, err := s.profileRepository.FindProfileByUserID(id)
+	if err != nil {
+		return errors.New("user tidak ditemukan")
+	}
+
+	err = s.userRepository.DeleteUser(user.UserId)
+	if err != nil {
+		return err
+	}
+
+	upload.DeleteFile(profile.ProfilePicture)
+
+	return nil
 }

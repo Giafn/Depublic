@@ -15,6 +15,7 @@ type UserRepository interface {
 	FindUserByEmail(email string) (*entity.User, error)
 	FindAllUser(page, limit int) ([]entity.User, int, error)
 	UpdateUser(user *entity.User) (*entity.User, error)
+	DeleteUser(id uuid.UUID) error
 }
 
 type userRepository struct {
@@ -143,4 +144,22 @@ func (r *userRepository) UpdateUser(user *entity.User) (*entity.User, error) {
 	}
 
 	return user, nil
+}
+
+func (r *userRepository) DeleteUser(id uuid.UUID) error {
+	if err := r.db.Where("user_id = ?", id).Delete(&entity.User{}).Error; err != nil {
+		return err
+	}
+
+	// profile delete
+	if err := r.db.Where("user_id = ?", id).Delete(&entity.Profile{}).Error; err != nil {
+		return err
+	}
+
+	err := r.cacheable.Del("FindAllUsers")
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

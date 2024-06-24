@@ -128,6 +128,12 @@ func AppPrivateRoutes(Handler handler.AppHandler) []*route.Route {
 			Roles:   onlyAdmin,
 		},
 		{
+			Method:  http.MethodDelete,
+			Path:    "/users/:id",
+			Handler: userHandler.DeleteUser,
+			Roles:   onlyAdmin,
+		},
+		{
 			Method:  http.MethodGet,
 			Path:    "/profile",
 			Handler: profileHandler.FindCurrentUserProfile,

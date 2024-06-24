@@ -292,3 +292,24 @@ func (h *UserHandler) UpdateUser(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "sukses update user", userResponse))
 }
+
+func (h *UserHandler) DeleteUser(c echo.Context) error {
+	var input binder.UserFindByIDRequest
+
+	if err := c.Bind(&input); err != nil {
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, "ada kesalahan input"))
+	}
+
+	if errorMessage, data := checkValidation(input); errorMessage != "" {
+		return c.JSON(http.StatusBadRequest, response.SuccessResponse(http.StatusBadRequest, errorMessage, data))
+	}
+
+	id := uuid.MustParse(input.ID)
+
+	err := h.userService.DeleteUser(id)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, err.Error()))
+	}
+
+	return c.JSON(http.StatusOK, response.SuccessResponse(http.StatusOK, "sukses delete user", nil))
+}
