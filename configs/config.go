@@ -22,7 +22,7 @@ type Config struct {
 
 type DeployConfig struct {
 	Protocol string `env:"PROTOCOL" envDefault:"https"`
-	Host     string `env:"HOST" envDefault:"https://7d2c39ddc228e4.lhr.life"`
+	Host     string `env:"HOST" envDefault:"7d2c39ddc228e4.lhr.life"`
 	Port     string `env:"PORT" envDefault:"80"`
 }
 
