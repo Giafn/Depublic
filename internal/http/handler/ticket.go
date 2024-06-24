@@ -3,6 +3,7 @@ package handler
 import (
 	"errors"
 	"net/http"
+	"time"
 
 	"github.com/Giafn/Depublic/internal/entity"
 	"github.com/Giafn/Depublic/internal/http/binder"
@@ -172,7 +173,17 @@ func (h *TicketHandler) ValidateTicket(c echo.Context) error {
 	}
 
 	if !transaction.IsPaid {
-		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, "transaksi belum dibayar"))
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, "ticket tidak valid"))
+	}
+
+	event, err := h.transactionService.GetEventByID(uuid.MustParse(oldTicket.EventID))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, err.Error()))
+	}
+
+	now := time.Now()
+	if now.After(event.EndTime) {
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, "event sudah berakhir"))
 	}
 
 	validatedTicket, err := h.ticketService.ValidateTicket(oldTicket)
