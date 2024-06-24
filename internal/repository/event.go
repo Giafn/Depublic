@@ -68,7 +68,14 @@ func (r *eventRepository) FindEventByID(id uuid.UUID) (*entity.Event, error) {
 func (r *eventRepository) GetEvents(filter map[string]interface{}, sort string, distance map[string]float64, pagination map[string]int) ([]entity.Event, int, error) {
 	var events []entity.Event
 
-	query := r.db.Preload("Pricings")
+	// Apply pagination
+	limit := pagination["limit"]
+	page := pagination["page"]
+
+	query := r.db.
+		Limit(limit).
+		Offset((page - 1) * limit).
+		Preload("Pricings")
 
 	// Apply filters
 	if price, ok := filter["price"]; ok {
@@ -113,29 +120,19 @@ func (r *eventRepository) GetEvents(filter map[string]interface{}, sort string, 
 		}
 	}
 
-	// Apply pagination
-	limit := pagination["limit"]
-	page := pagination["page"]
-
 	// Apply sorting
 	switch sort {
 	case "terbaru":
 		query = query.
-			Limit(limit).
-			Offset((page - 1) * limit).
 			Order("created_at DESC")
 	case "termahal":
 		query = query.
-			Limit(limit).
-			Offset((page - 1) * limit).
 			Joins("JOIN pricings ON pricings.event_id = events.id").
 			Select("events.*, MAX(pricings.fee) as max_fee").
 			Group("events.id").
 			Order("max_fee DESC")
 	case "termurah":
 		query = query.
-			Limit(limit).
-			Offset((page - 1) * limit).
 			Joins("JOIN pricings ON pricings.event_id = events.id").
 			Select("events.*, MIN(pricings.fee) as min_fee").
 			Group("events.id").
@@ -146,8 +143,6 @@ func (r *eventRepository) GetEvents(filter map[string]interface{}, sort string, 
 			lat := distance["latitude"]
 			lon := distance["longitude"]
 			query = query.
-				Limit(limit).
-				Offset((page-1)*limit).
 				Select("events.*, "+
 					"(? * ACOS(SIN(RADIANS(?)) * SIN(RADIANS(latitude)) + COS(RADIANS(?)) * COS(RADIANS(latitude)) * COS(RADIANS(?) - RADIANS(longitude)))) as distance", radius, lat, lat, lon).
 				Order("distance ASC")
