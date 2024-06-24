@@ -259,6 +259,11 @@ func (h *EventHandler) UpdateEventWithPricing(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, response.SuccessResponse(http.StatusBadRequest, errorMessage, data))
 	}
 
+	// chek if valid uuid
+	if _, err := uuid.Parse(input.ID); err != nil {
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, "ID Event tidak valid"))
+	}
+
 	id := uuid.MustParse(input.ID)
 
 	startTime, _ := time.Parse("2006-01-02 15:04:05", input.StartTime)
