@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/Giafn/Depublic/configs"
 	"github.com/Giafn/Depublic/internal/entity"
@@ -80,6 +81,20 @@ func (s *transactionService) CreateTransaction(
 	unpaidTransactionId, err := s.transactionRepository.FindUnpaidTransactionByUserID(userID, eventID)
 	if err != nil {
 		return nil, false, fmt.Errorf("error, there is unpaid transaction with transaction_id: %s", unpaidTransactionId)
+	}
+
+	// check event start date and end date
+	event, err := s.eventRepository.FindEventByID(eventID)
+	if err != nil {
+		return nil, false, err
+	}
+
+	now := time.Now()
+	if now.After(event.StartTime) {
+		if now.After(event.EndTime) {
+			return nil, false, errors.New("event already ended")
+		}
+		return nil, false, errors.New("event already started")
 	}
 
 	totalAmount, err := s.CountAmountTickets(tickets, eventID)

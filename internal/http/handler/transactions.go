@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/Giafn/Depublic/internal/entity"
 	"github.com/Giafn/Depublic/internal/http/binder"
@@ -317,6 +318,16 @@ func (h *TransactionHandler) PaymentRedirect(c echo.Context) error {
 		if submission.Status != "accepted" {
 			return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, "Your Submission not approved"))
 		}
+	}
+
+	now := time.Now()
+	if now.After(event.StartTime) {
+		transaction.Status = "failed_time"
+		_, err = h.transactionService.UpdateTransaction(transaction)
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, response.ErrorResponse(http.StatusInternalServerError, err.Error()))
+		}
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, "Event has been started"))
 	}
 
 	isAvaliable, err := h.transactionService.CheckTicketAvailability(uuid.MustParse(transID))
