@@ -10,6 +10,8 @@ import (
 	"github.com/Giafn/Depublic/internal/service"
 	pkg "github.com/Giafn/Depublic/pkg/pagination"
 	"github.com/Giafn/Depublic/pkg/response"
+	"github.com/Giafn/Depublic/pkg/token"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 )
@@ -305,6 +307,14 @@ func (h *UserHandler) DeleteUser(c echo.Context) error {
 	}
 
 	id := uuid.MustParse(input.ID)
+	dataUser, _ := c.Get("user").(*jwt.Token)
+	claims := dataUser.Claims.(*token.JwtCustomClaims)
+
+	userID := uuid.MustParse(claims.ID)
+
+	if id == userID {
+		return c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, "tidak bisa menghapus akun sendiri"))
+	}
 
 	err := h.userService.DeleteUser(id)
 	if err != nil {
